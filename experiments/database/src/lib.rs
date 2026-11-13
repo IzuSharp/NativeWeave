@@ -113,7 +113,7 @@ mod tests {
     async fn overflow_rejected_before_database_send() -> TestResult {
         let pool = sqlx::sqlite::SqlitePoolOptions::new().max_connections(1).connect("sqlite::memory:").await?;
         sqlx::query("CREATE TABLE items (id INTEGER)").execute(&pool).await?;
-        let q = Query::insert().into_table(Alias::new("items")).columns([Alias::new("id")]).values([Value::BigUnsigned(Some(u64::MAX))])?.to_owned();
+        let q = Query::insert().into_table(Alias::new("items")).columns([Alias::new("id")]).values([Value::BigUnsigned(Some(u64::MAX)).into()])?.to_owned();
         let (sql,values)=q.build(SqliteQueryBuilder);let sends=AtomicUsize::new(0);
         let error=execute(&pool,sql,values,&sends).await.unwrap_err();
         assert_eq!(error.downcast_ref::<Failure>(),Some(&Failure::Overflow));
