@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "repository": "https://github.com/IzuSharp/NativeWeave-Design",
+  "commit": "c62cdb8aee833b6ab1a03e29a3f59f81a1b483f9",
+  "sourcePath": "docs/standards/csharp-public-api-and-documentation.md",
+  "localPath": "docs/standards/csharp-public-api-and-documentation.md",
+  "sha256": "78f2aab2212fbbc49267e7827231a3f64cf9b840206d0acdc33768417e2dbcac",
+  "scope": "Experimental Hello World bootstrap; not acceptance of production Delivery tasks",
+  "checks": [
+    "compiled public API/nullability/default baseline",
+    "XML and generated Markdown reference",
+    "package-based JIT and Native AOT consumers"
+  ],
+  "deferred": [
+    "independent API review",
+    "DocFX publication",
+    "released-package compatibility baseline",
+    "production engine contract implementation"
+  ]
+}

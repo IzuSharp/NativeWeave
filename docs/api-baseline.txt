@@ -1,0 +1,2 @@
+public static class NativeWeave.HelloWorld.RustGreeting
+public static string Greet(string name = "World");

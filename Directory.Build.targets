@@ -1,0 +1,16 @@
+<Project>
+  <!-- Maintainer-only source consumers. None of these targets are shipped in NuGet. -->
+  <ItemGroup Condition="'$(UseLocalNativeWeave)' == 'true'">
+    <None Include="$(MSBuildThisFileDirectory)artifacts/native/*/native/*"
+          Link="%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest"
+          CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <Target Name="RequireLocalNativeWeave" BeforeTargets="PrepareForBuild"
+          Condition="'$(UseLocalNativeWeave)' == 'true'">
+    <ItemGroup>
+      <_LocalNative Include="$(MSBuildThisFileDirectory)artifacts/native/*/native/*" />
+    </ItemGroup>
+    <Error Condition="'@(_LocalNative)' == ''"
+           Text="Build the maintainer native asset first: python3 eng/build.py native" />
+  </Target>
+</Project>

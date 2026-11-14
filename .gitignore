@@ -1,0 +1,32 @@
+# Build, test, package and generated documentation output
+**/bin/
+**/obj/
+**/target/
+/artifacts/
+**/TestResults/
+*.binlog
+*.nupkg
+*.snupkg
+
+# Local checkouts, editors and operating systems
+.worktree/
+.worktrees/
+.vs/
+.idea/
+*.user
+*.suo
+.DS_Store
+Thumbs.db
+__pycache__/
+*.pyc
+
+# Local configuration and credentials (never commit signing material)
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.pem
+*.key
+NuGet.Config.user
+# Cargo.lock and packages.lock.json are intentionally committed.
