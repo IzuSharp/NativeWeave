@@ -10,7 +10,8 @@ extern "C" {
  * 4 name exceeds 4096 bytes, 255 caught Rust panic.
  * name is borrowed; output and written are caller-owned. Regions must be valid
  * and disjoint. written is required. (NULL, 0) queries required output length.
- * Errors leave output untouched; written is zero except for the size query.
+ * Validation errors leave output untouched and written zero. Capacity errors
+ * return the required length. Ignore written/output after a caught panic.
  * No pointers are retained, allocations transferred, callbacks or threads started.
  * Panic containment does not cover abort/OOM or invalid foreign pointers.
  */

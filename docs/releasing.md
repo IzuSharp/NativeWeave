@@ -18,7 +18,7 @@ The repository builds and tests candidates without a NuGet login. Public publica
    | Policy owner | The intended NuGet package owner |
 
 3. In GitHub create the `nuget` environment and choose the desired reviewers/ref restrictions. Add repository variable `NUGET_USER` with the NuGet login/profile name (not email). Set repository variable `NUGET_PUBLISH_ENABLED=true` **only when ready for actual public publication**. Before then, a missing/false variable keeps publication disabled. Do not paste tokens into this repository or chat.
-4. Configure private vulnerability reporting, dependency graph/push protection and required `Verify` checks as appropriate. These settings have not been changed by this bootstrap.
+4. Dependency graph and Dependabot alerts were enabled for this repository to run the required dependency-review gate. Configure private vulnerability reporting, push protection and required `Verify` checks as appropriate; those other settings have not been changed by this bootstrap.
 
 The workflow uses `NuGet/login` with `id-token: write` and receives a short-lived credential. A long-lived `NUGET_API_KEY` secret is not required for this OIDC path. See the official [Trusted Publishing documentation](https://learn.microsoft.com/en-us/nuget/nuget-org/trusted-publishing).
 

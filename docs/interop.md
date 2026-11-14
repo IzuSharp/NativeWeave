@@ -10,7 +10,7 @@ Input is at most 4096 UTF-8 bytes. Empty strings, Unicode and embedded NULs are 
 
 C# owns both input and output buffers. Rust borrows only during the synchronous call and keeps nothing. Small buffers use stack storage; larger buffers use bounded managed arrays. The result is a managed string. There is no native resource requiring Dispose, no callback, shared mutable state, cancellation, timeout or background runtime. Calls from different threads are independent. Libraries stay loaded for the process lifetime.
 
-Each call has three FFI transitions, one encoding, one decoding, native byte copies and one result-string allocation; larger inputs add two managed arrays. This is an explicit cost description, not a benchmark or zero-copy claim. Rust's greeting path allocates no result buffer.
+Each call has three FFI transitions, one encoding, one decoding, native byte copies and one result-string allocation; larger buffers add up to two managed arrays. This is an explicit cost description, not a benchmark or zero-copy claim. Rust's greeting path allocates no result buffer.
 
 ## Failures and bounds
 

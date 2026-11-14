@@ -14,7 +14,7 @@ dotnet format NativeWeave.slnx
 python3 eng/build.py verify
 ```
 
-When intentionally changing dependencies, run `dotnet restore --force-evaluate` and review all `packages.lock.json` changes. Cargo.lock is committed despite the crate being a library because maintainers distribute its native binary. Do not update dependencies or toolchains silently. The bootstrap has no third-party Cargo crates or managed runtime dependencies; introducing one requires license, security and native closure review.
+When intentionally changing dependencies, run `dotnet restore --force-evaluate` and review all `packages.lock.json` changes. Source builds use a per-checkout `artifacts/nuget-packages` cache unless `NUGET_PACKAGES` is explicitly set; this avoids accepting a lock hash from an unrelated global cache. Cargo.lock is committed despite the crate being a library because maintainers distribute its native binary. Do not update dependencies or toolchains silently. The bootstrap has no third-party Cargo crates or managed runtime dependencies; introducing one requires license, security and native closure review.
 
 For an intentional API/documentation change, update `docs/api-baseline.txt`, the compiled checks in `tools/ApiDocs`, XML and examples, then run `python3 eng/build.py verify --write-docs`. Review the generated `docs/api-reference.md` diff. Reflection is confined to the maintainer documentation tool; the product path is Native AOT compatible.
 
