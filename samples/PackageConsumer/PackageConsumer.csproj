@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NativeWeaveVersion Condition="'$(NativeWeaveVersion)' == ''">0.1.0-preview.1</NativeWeaveVersion>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NativeWeave.HelloWorld" Version="[$(NativeWeaveVersion)]" />
+  </ItemGroup>
+</Project>

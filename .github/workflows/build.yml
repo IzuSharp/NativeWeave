@@ -1,0 +1,66 @@
+name: Linux candidate
+on:
+  workflow_call:
+    inputs:
+      version:
+        type: string
+        default: 0.1.0-preview.1
+    outputs:
+      artifact:
+        value: ${{ jobs.build.outputs.artifact }}
+permissions:
+  contents: read
+jobs:
+  build:
+    name: Build, package and Native AOT
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      artifact: nativeweave-linux-${{ github.run_id }}-${{ github.run_attempt }}
+    env:
+      CI: "true"
+      DOTNET_NOLOGO: "true"
+      DOTNET_CLI_TELEMETRY_OPTOUT: "1"
+      PACKAGE_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - name: Install native build prerequisites and pinned Rust
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang zlib1g-dev
+          rustup toolchain install 1.100.0 --profile minimal --component rustfmt --component clippy
+      - name: Verify source, package, API documentation and actual AOT consumers
+        run: python3 eng/build.py verify --version "$PACKAGE_VERSION"
+      - name: Verify a fresh Linux SDK container with no Rust installed
+        run: |
+          docker run --rm \
+            -v "$PWD:/work:ro" -v "$PWD/artifacts:/work/artifacts" -w /work \
+            -e PACKAGE_VERSION -e DOTNET_CLI_TELEMETRY_OPTOUT=1 \
+            mcr.microsoft.com/dotnet/sdk:11.0.100-resolute-amd64@sha256:7913685c883a29dd8ba79da96172f5c6b29ed9be706ebe95935e3ef45f19c9c1 \
+            bash eng/consume-linux.sh
+      - name: Reject generated source or dependency drift
+        run: git diff --exit-code
+      - name: Retain verification logs and evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: nativeweave-evidence-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/logs/
+            artifacts/verification.json
+            artifacts/consumer-result.json
+            artifacts/pristine-consumer.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Retain the exact verified candidate
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: nativeweave-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/packages/
+          if-no-files-found: error
+          retention-days: 14

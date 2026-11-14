@@ -1,0 +1,16 @@
+* text=auto eol=lf
+*.cs text diff=csharp
+*.rs text diff=rust whitespace=tab-in-indent,trailing-space,tabwidth=4
+*.sh text eol=lf
+*.slnx text eol=lf
+Cargo.lock linguist-generated=false
+*.png binary
+*.ico binary
+*.zip binary
+*.gz binary
+*.dll binary
+*.exe binary
+*.pdb binary
+*.so binary
+*.dylib binary
+*.nupkg binary

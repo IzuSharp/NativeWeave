@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [main, "codex/**"]
+  pull_request:
+  merge_group:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+  security:
+    uses: ./.github/workflows/security.yml
+    permissions:
+      contents: read
+      pull-requests: read
+      security-events: write
+  verify:
+    name: Verify
+    if: always()
+    needs: [build, security]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every gate
+        env:
+          BUILD_RESULT: ${{ needs.build.result }}
+          SECURITY_RESULT: ${{ needs.security.result }}
+        run: |
+          test "$BUILD_RESULT" = success
+          test "$SECURITY_RESULT" = success

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <UseLocalNativeWeave>true</UseLocalNativeWeave>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../src/NativeWeave.HelloWorld/NativeWeave.HelloWorld.csproj" />
+  </ItemGroup>
+</Project>

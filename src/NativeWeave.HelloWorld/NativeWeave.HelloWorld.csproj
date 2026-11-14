@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <PackageId>NativeWeave.HelloWorld</PackageId>
+    <Description>Experimental C# and Rust interop bootstrap for NativeWeave. Not a database or server engine.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/IzuSharp/NativeWeave</PackageProjectUrl>
+    <PackageTags>NativeWeave;Rust;interop;NativeAOT</PackageTags>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="../../packaging/README.md" Pack="true" PackagePath="/" />
+    <None Include="../../LICENSE" Pack="true" PackagePath="/" />
+    <None Include="../../THIRD_PARTY_NOTICES.md" Pack="true" PackagePath="/" />
+    <None Include="../../artifacts/native/**/*" Pack="true" PackagePath="runtimes/%(RecursiveDir)%(Filename)%(Extension)" />
+    <None Include="../../artifacts/manifest.json" Pack="true" PackagePath="nativeweave/" />
+  </ItemGroup>
+  <Target Name="RequireNativePackageAssets" BeforeTargets="GenerateNuspec">
+    <Error Condition="!Exists('../../artifacts/manifest.json')"
+           Text="Use python3 eng/build.py pack to stage and validate native assets before packaging." />
+  </Target>
+</Project>

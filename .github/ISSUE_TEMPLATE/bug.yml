@@ -1,0 +1,22 @@
+name: Bug report
+description: Report a reproducible NativeWeave issue (use SECURITY.md for vulnerabilities).
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Commit or package version
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: OS, architecture and dotnet SDK version
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction, expected behavior and actual result
+      description: Include minimal code and commands. Remove credentials and private data.
+    validations:
+      required: true
