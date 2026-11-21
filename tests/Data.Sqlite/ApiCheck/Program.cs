@@ -228,7 +228,7 @@ foreach (var key in expected.Keys.Intersect(actual.Keys))
 }
 var xml = XDocument.Load(Path.ChangeExtension(assemblyPath, ".xml"));
 var docs = xml.Descendants("member").ToDictionary(e => e.Attribute("name")!.Value, StringComparer.Ordinal);
-var output = new StringBuilder("# NativeWeave.Database.Sqlite component API reference\n\nGenerated from the compiled product assembly and its XML comments by `tests/Data.Sqlite/ApiCheck`. B03 options and component Engine; exact Create/UseSqlite composition remains B04 and is recorded separately. Actual SQLx execution is verified through the component fixture.\n\n");
+var output = new StringBuilder("# NativeWeave.Database.Sqlite API reference\n\nGenerated from the compiled product assembly and its XML comments by `tests/Data.Sqlite/ApiCheck`. Covers provider options, Engine preflight, and the integrated Create/UseSqlite data source factories. Exact declarations retain the pinned Design identity in `public-api.expected.json`; the historical B03/B04 ownership slice remains in `host-composition.expected.json`.\n\n");
 foreach (var entry in expected.OrderBy(e => e.Key, StringComparer.Ordinal))
 {
     if (!actual.TryGetValue(entry.Key, out var symbol)) continue;

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Execute transferred B24 AOT outputs in the existing runtime-only Linux image."""
+"""Execute transferred database AOT outputs in the runtime-only Linux image."""
 import argparse
 import hashlib
 import json
@@ -10,22 +10,17 @@ import subprocess
 import tempfile
 
 RUNTIME_IMAGE = "mcr.microsoft.com/dotnet/runtime-deps:10.0.15-noble-amd64@sha256:ebb73a172b49758c6de2462305e872ea0cb37ad3ca27cc0d86bc48b6271eaace"
-PROVIDERS = {"sqlite": ["sqlite"], "postgresql": ["postgresql"], "server": ["none"],
-             "grpc": ["none"], "mcp": ["none"], "combined": ["sqlite", "postgresql"]}
+TASK = "DB-Scope-01"
+PROVIDERS = {"sqlite": ["sqlite"], "postgresql": ["postgresql"], "combined": ["sqlite", "postgresql"]}
 
 
 def required(graph):
-    result = {"actual-native-aot"}
-    if graph in ("sqlite", "postgresql", "combined"):
-        result.update(("typed-entity-materialization", "typed-native-database-roundtrip", "database-local-owners-retired"))
-    if graph in ("server", "grpc", "mcp", "combined"):
-        result.update(("actual-http-1.1-tls", "actual-http-2.0-tls", "server-owners-retired"))
-    if graph in ("grpc", "combined"):
-        result.add("actual-grpc-http2-terminal-status-and-result")
-    if graph in ("mcp", "combined"):
-        result.add("actual-mcp-typed-result")
+    if graph not in PROVIDERS:
+        raise ValueError("Unknown database transfer graph")
+    result = {"actual-native-aot", "typed-entity-materialization", "typed-native-database-roundtrip",
+              "typed-fluent-dto-query", "database-local-owners-retired", "actual-database-native-mapping"}
     if graph == "combined":
-        result.update(("ordinary-added-entity-dto-handler", "ordinary-added-http-handler"))
+        result.add("ordinary-added-entity-dto-query")
     return result
 
 
@@ -56,9 +51,9 @@ def main():
     if not all(absence.values()):
         raise ValueError("Runtime-only image contains a managed/native build tool")
     manifest = json.loads((bundle / "manifest.json").read_text())
-    if manifest.get("rid") != "linux-x64" or manifest.get("task") != "B24" or set(manifest.get("graphs", {})) != {"sqlite", "postgresql", "server", "grpc", "mcp", "combined"}:
-        raise ValueError("Incomplete actual B24 AOT transfer")
-    result = {"schemaVersion": 1, "task": "B24", "passed": False, "image": RUNTIME_IMAGE,
+    if manifest.get("rid") != "linux-x64" or manifest.get("task") != TASK or set(manifest.get("graphs", {})) != set(PROVIDERS):
+        raise ValueError("Incomplete actual database AOT transfer")
+    result = {"schemaVersion": 1, "task": TASK, "passed": False, "image": RUNTIME_IMAGE,
               "source_commit": manifest["source_commit"], "packages": manifest["packages"],
               "manifestSha256": sha(bundle / "manifest.json"), "toolAbsence": absence, "cases": []}
     work = Path(tempfile.mkdtemp(prefix="nativeweave-b24-runtime-"))
@@ -67,6 +62,10 @@ def main():
             if row.get("providers") != PROVIDERS[graph]:
                 raise ValueError("Transferred graph omits or changes required provider rows")
             directory = relative(bundle, graph)
+            actual_files = {path.relative_to(directory).as_posix() for path in directory.rglob("*")
+                            if path.is_file() and path.suffix not in (".dbg", ".pdb", ".xml")}
+            if actual_files != set(row["files"]):
+                raise ValueError("Runtime bundle contains missing or undeclared output files")
             for name, digest in row["files"].items():
                 if sha(relative(directory, name)) != digest:
                     raise ValueError("Transferred artifact identity differs")
@@ -94,8 +93,12 @@ def main():
                     raise ValueError("Transferred AOT domain process did not pass")
                 receipt = receipts[0]
                 expected = set(row["expectedChecks"]) | required(graph)
-                if receipt.get("task") != "B24" or receipt.get("provider") != provider or not expected.issubset(receipt.get("checks", [])):
+                if receipt.get("task") != TASK or receipt.get("provider") != provider or not expected.issubset(receipt.get("checks", [])):
                     raise ValueError("Transferred process omitted required domain operations")
+                native = row["native"]["database." + provider]
+                expected_mapping = [{"file": Path(native["relativePath"]).name, "sha256": native["sha256"]}]
+                if receipt.get("nativeLibraries") != expected_mapping:
+                    raise ValueError("Runtime-only process mapped different native database bytes")
                 result["cases"].append({"graph": graph, "provider": provider, "passed": True,
                     "processExited": True, "executableSha256": sha(executable), "receipt": receipt,
                     "stdoutSha256": hashlib.sha256(process.stdout).hexdigest(), "stderrSha256": hashlib.sha256(process.stderr).hexdigest()})

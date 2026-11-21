@@ -7,6 +7,7 @@
     "NativeWeave.Data.Column",
     "NativeWeave.Data.ColumnOptions",
     "NativeWeave.Data.ConcurrencyCheck",
+    "NativeWeave.Data.ConcurrencyConflictException",
     "NativeWeave.Data.DatabaseCapabilityException",
     "NativeWeave.Data.DatabaseErrorKind",
     "NativeWeave.Data.DatabaseException",
@@ -24,7 +25,12 @@
     "NativeWeave.Data.SqlParameters",
     "NativeWeave.Data.Table",
     "NativeWeave.Data.TableBuilder",
-    "NativeWeave.Data.ValueCodec"
+    "NativeWeave.Data.ValueCodec",
+    "NativeWeave.Data.WeaveColumnAttribute",
+    "NativeWeave.Data.WeaveIgnoreAttribute",
+    "NativeWeave.Data.WeaveKeyAttribute",
+    "NativeWeave.Data.WeaveTableAttribute",
+    "NativeWeave.Data.WeaveVersionAttribute"
   ],
   "symbols": [
     {
@@ -868,6 +874,83 @@
         }
       ],
       "semantic_policy": "NativeWeave.Data.ConcurrencyCheck"
+    },
+    {
+      "id": "T:NativeWeave.Data.ConcurrencyConflictException",
+      "signature": "public sealed class NativeWeave.Data.ConcurrencyConflictException : NativeWeave.Data.DatabaseException",
+      "implicit_member": false,
+      "kind": "NamedType",
+      "type_kind": "Class",
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.ConcurrencyConflictException"
+    },
+    {
+      "id": "M:NativeWeave.Data.ConcurrencyConflictException.#ctor(System.String,System.Int64,System.Int64)",
+      "signature": "public NativeWeave.Data.ConcurrencyConflictException.ConcurrencyConflictException(string message, long expectedRows, long actualRows)",
+      "implicit_member": false,
+      "kind": "Method",
+      "type_kind": null,
+      "parameters": [
+        {
+          "name": "message",
+          "type": "string",
+          "nullable": "NotAnnotated",
+          "attributes": [],
+          "ref_kind": "None",
+          "scoped_kind": "None",
+          "optional": false,
+          "params": false,
+          "has_explicit_default_value": false,
+          "default_value": null
+        },
+        {
+          "name": "expectedRows",
+          "type": "long",
+          "nullable": "NotAnnotated",
+          "attributes": [],
+          "ref_kind": "None",
+          "scoped_kind": "None",
+          "optional": false,
+          "params": false,
+          "has_explicit_default_value": false,
+          "default_value": null
+        },
+        {
+          "name": "actualRows",
+          "type": "long",
+          "nullable": "NotAnnotated",
+          "attributes": [],
+          "ref_kind": "None",
+          "scoped_kind": "None",
+          "optional": false,
+          "params": false,
+          "has_explicit_default_value": false,
+          "default_value": null
+        }
+      ],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.ConcurrencyConflictException"
+    },
+    {
+      "id": "P:NativeWeave.Data.ConcurrencyConflictException.ActualRows",
+      "signature": "public long NativeWeave.Data.ConcurrencyConflictException.ActualRows { get; }",
+      "implicit_member": false,
+      "kind": "Property",
+      "type_kind": null,
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.ConcurrencyConflictException"
+    },
+    {
+      "id": "P:NativeWeave.Data.ConcurrencyConflictException.ExpectedRows",
+      "signature": "public long NativeWeave.Data.ConcurrencyConflictException.ExpectedRows { get; }",
+      "implicit_member": false,
+      "kind": "Property",
+      "type_kind": null,
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.ConcurrencyConflictException"
     },
     {
       "id": "T:NativeWeave.Data.DatabaseCapabilityException",
@@ -3129,6 +3212,162 @@
       "parameters": [],
       "type_parameters": [],
       "semantic_policy": "NativeWeave.Data.ValueCodec"
+    },
+    {
+      "id": "T:NativeWeave.Data.WeaveColumnAttribute",
+      "signature": "[System.AttributeUsageAttribute(System.AttributeTargets.Property, Inherited = false)]\npublic sealed class NativeWeave.Data.WeaveColumnAttribute : System.Attribute",
+      "implicit_member": false,
+      "kind": "NamedType",
+      "type_kind": "Class",
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveColumnAttribute"
+    },
+    {
+      "id": "M:NativeWeave.Data.WeaveColumnAttribute.#ctor(System.String)",
+      "signature": "public NativeWeave.Data.WeaveColumnAttribute.WeaveColumnAttribute(string name)",
+      "implicit_member": false,
+      "kind": "Method",
+      "type_kind": null,
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": "NotAnnotated",
+          "attributes": [],
+          "ref_kind": "None",
+          "scoped_kind": "None",
+          "optional": false,
+          "params": false,
+          "has_explicit_default_value": false,
+          "default_value": null
+        }
+      ],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveColumnAttribute"
+    },
+    {
+      "id": "P:NativeWeave.Data.WeaveColumnAttribute.Generated",
+      "signature": "public bool NativeWeave.Data.WeaveColumnAttribute.Generated { get; init; }",
+      "implicit_member": false,
+      "kind": "Property",
+      "type_kind": null,
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveColumnAttribute"
+    },
+    {
+      "id": "T:NativeWeave.Data.WeaveIgnoreAttribute",
+      "signature": "[System.AttributeUsageAttribute(System.AttributeTargets.Property, Inherited = false)]\npublic sealed class NativeWeave.Data.WeaveIgnoreAttribute : System.Attribute",
+      "implicit_member": false,
+      "kind": "NamedType",
+      "type_kind": "Class",
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveIgnoreAttribute"
+    },
+    {
+      "id": "M:NativeWeave.Data.WeaveIgnoreAttribute.#ctor",
+      "signature": "public NativeWeave.Data.WeaveIgnoreAttribute.WeaveIgnoreAttribute()",
+      "implicit_member": true,
+      "kind": "Method",
+      "type_kind": null,
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveIgnoreAttribute"
+    },
+    {
+      "id": "T:NativeWeave.Data.WeaveKeyAttribute",
+      "signature": "[System.AttributeUsageAttribute(System.AttributeTargets.Property, Inherited = false)]\npublic sealed class NativeWeave.Data.WeaveKeyAttribute : System.Attribute",
+      "implicit_member": false,
+      "kind": "NamedType",
+      "type_kind": "Class",
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveKeyAttribute"
+    },
+    {
+      "id": "M:NativeWeave.Data.WeaveKeyAttribute.#ctor",
+      "signature": "public NativeWeave.Data.WeaveKeyAttribute.WeaveKeyAttribute()",
+      "implicit_member": true,
+      "kind": "Method",
+      "type_kind": null,
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveKeyAttribute"
+    },
+    {
+      "id": "T:NativeWeave.Data.WeaveTableAttribute",
+      "signature": "[System.AttributeUsageAttribute(System.AttributeTargets.Class, Inherited = false)]\npublic sealed class NativeWeave.Data.WeaveTableAttribute : System.Attribute",
+      "implicit_member": false,
+      "kind": "NamedType",
+      "type_kind": "Class",
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveTableAttribute"
+    },
+    {
+      "id": "M:NativeWeave.Data.WeaveTableAttribute.#ctor(System.String)",
+      "signature": "public NativeWeave.Data.WeaveTableAttribute.WeaveTableAttribute(string name)",
+      "implicit_member": false,
+      "kind": "Method",
+      "type_kind": null,
+      "parameters": [
+        {
+          "name": "name",
+          "type": "string",
+          "nullable": "NotAnnotated",
+          "attributes": [],
+          "ref_kind": "None",
+          "scoped_kind": "None",
+          "optional": false,
+          "params": false,
+          "has_explicit_default_value": false,
+          "default_value": null
+        }
+      ],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveTableAttribute"
+    },
+    {
+      "id": "P:NativeWeave.Data.WeaveTableAttribute.DescriptorName",
+      "signature": "public string? NativeWeave.Data.WeaveTableAttribute.DescriptorName { get; init; }",
+      "implicit_member": false,
+      "kind": "Property",
+      "type_kind": null,
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveTableAttribute"
+    },
+    {
+      "id": "P:NativeWeave.Data.WeaveTableAttribute.Schema",
+      "signature": "public string? NativeWeave.Data.WeaveTableAttribute.Schema { get; init; }",
+      "implicit_member": false,
+      "kind": "Property",
+      "type_kind": null,
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveTableAttribute"
+    },
+    {
+      "id": "T:NativeWeave.Data.WeaveVersionAttribute",
+      "signature": "[System.AttributeUsageAttribute(System.AttributeTargets.Property, Inherited = false)]\npublic sealed class NativeWeave.Data.WeaveVersionAttribute : System.Attribute",
+      "implicit_member": false,
+      "kind": "NamedType",
+      "type_kind": "Class",
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveVersionAttribute"
+    },
+    {
+      "id": "M:NativeWeave.Data.WeaveVersionAttribute.#ctor",
+      "signature": "public NativeWeave.Data.WeaveVersionAttribute.WeaveVersionAttribute()",
+      "implicit_member": true,
+      "kind": "Method",
+      "type_kind": null,
+      "parameters": [],
+      "type_parameters": [],
+      "semantic_policy": "NativeWeave.Data.WeaveVersionAttribute"
     }
   ]
 }

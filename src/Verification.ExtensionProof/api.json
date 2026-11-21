@@ -1,9 +1,0 @@
-{
-  "assembly": "src/Verification.ExtensionProof/bin/Release/net11.0/NativeWeave.Verification.ExtensionProof.dll",
-  "sources": ["src/Verification.ExtensionProof"],
-  "baselines": ["src/Verification.ExtensionProof/public-api.expected.json"],
-  "title": "NativeWeave optional Linux affinity verification surface",
-  "scope": "A23 internal conformance assembly. No public runtime, GUI, GPU, mobile or dispatcher application API is exported. Public Core SPI retains its existing exact declarations.",
-  "output": "src/Verification.ExtensionProof/api-reference.md",
-  "guides": ["docs/guides/verification-extensionproof.md"]
-}

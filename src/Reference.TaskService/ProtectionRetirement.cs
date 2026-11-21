@@ -37,7 +37,7 @@ internal sealed partial class TaskService
         finally { _protectionSlots.Release(); }
     }
 
-    /// <summary>Called after handler admission stops and native source retirement joins, on every host exit path.</summary>
+    /// <summary>Called after fixture operations end and native source retirement joins, on every exit path.</summary>
     internal async Task JoinProtectionRetirementAsync()
     {
         while (true)

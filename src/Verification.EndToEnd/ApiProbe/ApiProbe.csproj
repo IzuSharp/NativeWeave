@@ -2,6 +2,7 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <AssemblyName>NativeWeave.Verification.EndToEnd.ApiProbe</AssemblyName>
+    <NativeWeavePackageVersion Condition="'$(NativeWeavePackageVersion)' == ''">0.1.0-preview.1</NativeWeavePackageVersion>
     <TargetFramework>net11.0</TargetFramework><LangVersion>15.0</LangVersion>
     <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors><IsAotCompatible>true</IsAotCompatible>
@@ -11,9 +12,7 @@
     <NuGetLockFilePath Condition="'$(PublishAot)' == 'true'">$(MSBuildProjectDirectory)/packages.linux-x64.aot.lock.json</NuGetLockFilePath>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="NativeWeave.Database.Sqlite" Version="[0.1.0-preview.1]" />
-    <PackageReference Include="NativeWeave.Database.PostgreSql" Version="[0.1.0-preview.1]" />
-    <PackageReference Include="NativeWeave.Server.Grpc" Version="[0.1.0-preview.1]" />
-    <PackageReference Include="NativeWeave.Server.Mcp" Version="[0.1.0-preview.1]" />
+    <PackageReference Include="NativeWeave.Database.Sqlite" Version="[$(NativeWeavePackageVersion)]" />
+    <PackageReference Include="NativeWeave.Database.PostgreSql" Version="[$(NativeWeavePackageVersion)]" />
   </ItemGroup>
 </Project>

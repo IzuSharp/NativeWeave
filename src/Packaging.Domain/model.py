@@ -1,4 +1,4 @@
-"""The B24 local domain package graph and portable handoff contract.
+"""The database-only package graph and portable local handoff contract.
 
 Internal maintainer orchestration only. Application builds use the existing
 packaging task; this module neither runs Cargo nor publishes to a registry.
@@ -10,14 +10,17 @@ import importlib.util
 import json
 from pathlib import Path
 import re
+import xml.etree.ElementTree as ET
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 REPOSITORY = "https://github.com/IzuSharp/NativeWeave"
 RID = "linux-x64"
+TASK = "DB-Scope-01"
 COMMON = (
     "NativeWeave.Interop.Abi", "NativeWeave.Core", "NativeWeave.Data",
     "NativeWeave.Database.Transactions", "NativeWeave.Data.Streaming",
-    "NativeWeave.Query.Binding", "NativeWeave.Query.Generator", "NativeWeave.Server.Generator",
+    "NativeWeave.Query.Binding", "NativeWeave.Query.Generator",
 )
 MANAGED = {
     "NativeWeave.Interop.Abi": ("src/Interop.Abi", []),
@@ -27,13 +30,9 @@ MANAGED = {
     "NativeWeave.Data.Streaming": ("src/Data.Streaming", ["NativeWeave.Data"]),
     "NativeWeave.Query.Binding": ("src/Query.Binding", ["NativeWeave.Data", "NativeWeave.Interop.Abi"]),
     "NativeWeave.Query.Generator": ("src/Query.Generator", []),
-    "NativeWeave.Server.Generator": ("src/Server.Application/Generator", []),
     "NativeWeave.Database": ("src/Data.NativeHost", ["NativeWeave.Core", "NativeWeave.Data", "NativeWeave.Database.Transactions", "NativeWeave.Data.Streaming", "NativeWeave.Query.Binding"]),
     "NativeWeave.Database.Sqlite": ("src/Data.Sqlite", ["NativeWeave.Core", "NativeWeave.Data", "NativeWeave.Database", "NativeWeave.Query.Generator", "NativeWeave.Database.Sqlite.Native"]),
     "NativeWeave.Database.PostgreSql": ("src/Data.Postgres", ["NativeWeave.Core", "NativeWeave.Data", "NativeWeave.Database", "NativeWeave.Query.Generator", "NativeWeave.Database.PostgreSql.Native"]),
-    "NativeWeave.Server": ("src/Server.Application", ["NativeWeave.Core", "NativeWeave.Server.Generator", "NativeWeave.Server.Native"]),
-    "NativeWeave.Server.Grpc": ("src/Protocols.Grpc", ["NativeWeave.Server"]),
-    "NativeWeave.Server.Mcp": ("src/Protocols.Mcp", ["NativeWeave.Server"]),
 }
 DATABASE_CAPABILITIES = [
     "db.metadata.v1", "db.query.v1", "db.transactions.v1", "db.savepoints.v1", "db.streaming.v1",
@@ -46,11 +45,53 @@ DATABASE_CAPABILITIES = [
 ENGINES = {
     "database.sqlite": ("NativeWeave.Database.Sqlite", "libnw_database_sqlite.so", "nativeweave-database-host", DATABASE_CAPABILITIES),
     "database.postgresql": ("NativeWeave.Database.PostgreSql", "libnw_database_postgresql.so", "nativeweave-database-host", DATABASE_CAPABILITIES),
-    "server": ("NativeWeave.Server", "libnativeweave_server.so", "nativeweave-server", ["http1", "http2", "tls", "trailers", "grpc", "mcp", "sse"]),
 }
 LEAVES = {value[0] + ".Native": engine for engine, value in ENGINES.items()}
 IDS = tuple(sorted(set(MANAGED) | set(LEAVES)))
 CHANGED = tuple(identity for identity in MANAGED if identity not in COMMON)
+RETIRED_PACKAGE_PREFIXES = (
+    "nativeweave.server", "nativeweave.protocols", "nativeweave.engines",
+    "nativeweave.helloworld", "nativeweave.conformance", "nativeweave.verification.extensionproof",
+    "grpc.", "google.protobuf", "modelcontextprotocol",
+)
+
+
+def require_database_package(identity):
+    """Reject retired products even if an otherwise valid graph includes one."""
+    name = identity.lower()
+    if name.startswith(RETIRED_PACKAGE_PREFIXES):
+        raise ValueError("Retired non-database package is present: " + identity)
+    if name.startswith("nativeweave.") and name not in {item.lower() for item in IDS}:
+        raise ValueError("Undeclared NativeWeave database package: " + identity)
+
+
+def validate_database_payload(package, expected):
+    """Check the whole nuspec, not only the owned subset of dependency edges."""
+    require_database_package(expected["id"])
+    with zipfile.ZipFile(package) as archive:
+        names = archive.namelist()
+        metadata = ET.fromstring(archive.read(expected["id"] + ".nuspec")).find("{*}metadata")
+        dependencies = {}
+        for item in metadata.findall(".//{*}dependency"):
+            identity = item.attrib["id"]
+            require_database_package(identity)
+            if identity in dependencies:
+                raise ValueError("Duplicate database package dependency: " + identity)
+            dependencies[identity] = item.attrib["version"]
+        if dependencies != {name: "[" + version + "]" for name, version in expected["dependencies"].items()}:
+            raise ValueError("Database nuspec has undeclared dependencies")
+        if metadata.findall(".//{*}frameworkReference") or metadata.findall(".//{*}frameworkAssembly"):
+            raise ValueError("Database packages must not add a shared server framework")
+        native = {name for name in names if name.endswith((".so", ".dylib")) or name.startswith("runtimes/")}
+        expected_native = {expected["native"]["path"]} if expected.get("native") else set()
+        if native != expected_native:
+            raise ValueError("Database package contains an undeclared native asset")
+        libraries = {Path(name).name for name in names if name.startswith("lib/") and name.endswith(".dll")}
+        expected_libraries = ({expected["id"] + ".dll"}
+                              if expected["id"] in MANAGED and expected["id"] != "NativeWeave.Query.Generator" else set())
+        if libraries != expected_libraries:
+            raise ValueError("Database package contains an undeclared runtime assembly")
+    return {"dependencies": dependencies, "managedRuntimeAssemblies": sorted(libraries), "nativeAssets": sorted(native)}
 
 
 def module(name, relative):
@@ -89,7 +130,7 @@ def relative_file(base, name):
 def versions(previous, candidate=None):
     for value in (previous, candidate or previous):
         if not re.fullmatch(r"\d+\.\d+\.\d+-[0-9A-Za-z.-]+", value):
-            raise ValueError("B24 requires an exact, fresh prerelease version")
+            raise ValueError("Database candidates require an exact, fresh prerelease version")
         if value == "0.1.0-preview.1":
             raise ValueError("Historical preview.1 identities must remain immutable")
     if candidate is not None and previous == candidate:
@@ -131,35 +172,40 @@ def subclosure(closure, identity):
 def load_manifest(path):
     path = Path(path).resolve()
     manifest = json.loads(path.read_text())
-    if (manifest.get("schemaVersion"), manifest.get("scope"), manifest.get("rid")) != (1, "local-only", RID):
-        raise ValueError("Unknown B24 manifest or scope")
+    if (manifest.get("schemaVersion"), manifest.get("task"), manifest.get("scope"), manifest.get("rid")) != (1, TASK, "local-only", RID):
+        raise ValueError("Unknown database manifest, task or scope")
     if manifest.get("sourceDirty") is not False or not re.fullmatch(r"[0-9a-f]{40}", manifest.get("sourceCommit", "")):
-        raise ValueError("B24 needs a clean, exact producer source")
+        raise ValueError("Database candidates need a clean, exact producer source")
     compat = module("domain_compatibility", "src/Verification.Compatibility/compatibility.py")
     for name in ("previous", "candidate"):
         closure = manifest[name]
         items = closure["packages"]
         if sorted(item["id"] for item in items) != list(IDS):
-            raise ValueError("B24 requires exactly the seventeen owned package IDs")
+            raise ValueError("Database candidates require exactly the twelve owned package IDs")
         record = json.loads(relative_file(path.parent, closure["releaseRecord"]).read_text())
         packages = {item["id"]: relative_file(path.parent, item["path"]) for item in items}
         if record["source_commit"] != manifest["sourceCommit"] or record["source_dirty"] is not False:
             raise ValueError("Producer and release source disagree")
         expected = {item["id"]: item for item in record["packages"]}
         for item in items:
+            require_database_package(item["id"])
+            if item.get("externalDependencies"):
+                raise ValueError("The database closure has no external managed runtime dependencies")
             release_item = expected[item["id"]]
             if any(item[key] != release_item[key] for key in ("id", "version", "dependencies")):
                 raise ValueError("Handoff and release package graphs disagree")
             if sha(packages[item["id"]]) != item["sha256"] or item["sha256"] != release_item["upload_archive_sha256"]:
-                raise ValueError("B24 archive identity changed")
+                raise ValueError("Database archive identity changed")
         compat.validate_closure(record, packages)
+        for item in record["packages"]:
+            validate_database_payload(packages[item["id"]], item)
     previous = {item["id"]: item for item in manifest["previous"]["packages"]}
     candidate = {item["id"]: item for item in manifest["candidate"]["packages"]}
     expected_previous = versions(manifest["previous"]["version"])
     expected_candidate = versions(manifest["previous"]["version"], manifest["candidate"]["version"])
     for identity in IDS:
         if previous[identity]["version"] != expected_previous[identity] or candidate[identity]["version"] != expected_candidate[identity]:
-            raise ValueError("B24 version split differs from eight common and nine changed packages")
+            raise ValueError("Database version split differs from seven common and five changed packages")
         if identity in COMMON and previous[identity]["sha256"] != candidate[identity]["sha256"]:
             raise ValueError("A retained common archive was rebuilt or changed")
     return manifest

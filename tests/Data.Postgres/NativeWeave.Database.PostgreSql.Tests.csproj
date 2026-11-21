@@ -9,6 +9,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="ApiCheck/**/*.cs" />
+    <Compile Include="../ProviderProfileChecks.cs" Link="ProviderProfileChecks.cs" />
     <ProjectReference Include="../../src/Data.Postgres/NativeWeave.Database.PostgreSql.csproj" />
   </ItemGroup>
 </Project>

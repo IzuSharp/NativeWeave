@@ -1,23 +1,22 @@
 # Contributing
 
-Read [AGENTS.md](AGENTS.md), the [background](docs/background.md), and the pinned API standard before changing an API or native boundary. Repository prose and code comments are English; discussions may use any language.
+Read [AGENTS.md](AGENTS.md), [background](docs/background.md), and the pinned C# API standard before changing a database API or native boundary. Repository prose and code comments are English.
 
-Use a topic branch and isolated worktree. Keep source, tests, XML documentation, generated reference, examples and ownership/cost explanations in the same change. Preserve the existing MIT license. Never commit credentials, build outputs or native binaries.
+Use a topic branch and isolated worktree. Keep source, tests, XML documentation, compiled API checks, examples and ownership/cost explanations together. Preserve the MIT license; never commit credentials, build outputs or native binaries.
 
 ## Development
 
 ```sh
-python3 eng/build.py native
-dotnet run --project samples/HelloWorld
 cargo fmt --all
 dotnet format NativeWeave.slnx
-python3 eng/build.py verify
+# Set a disposable PostgreSQL18 endpoint and server-tool path as described in README.
+python3 eng/build.py verify --design /path/to/frozen-design
 ```
 
-When intentionally changing dependencies, run `dotnet restore --force-evaluate` and review all `packages.lock.json` changes. Source builds use a per-checkout `artifacts/nuget-packages` cache unless `NUGET_PACKAGES` is explicitly set; this avoids accepting a lock hash from an unrelated global cache. Cargo.lock is committed despite the crate being a library because maintainers distribute its native binary. Do not update dependencies or toolchains silently. The bootstrap has no third-party Cargo crates or managed runtime dependencies; introducing one requires license, security and native closure review.
+Formal verification requires a clean committed source. Source-only debugging may build the two explicit database provider profiles, but it does not create a passed candidate receipt. For intentional dependency changes, regenerate and review lockfiles; ordinary CI uses locked restore/build. Avoid unrelated dependency/toolchain upgrades during scope pruning.
 
-For an intentional API/documentation change, update `docs/api-baseline.txt`, the compiled checks in `tools/ApiDocs`, XML and examples, then run `python3 eng/build.py verify --write-docs`. Review the generated `docs/api-reference.md` diff. Reflection is confined to the maintainer documentation tool; the product path is Native AOT compatible.
+Compiled API/XML checks live with their database and Core components. The shared maintainer tool is `src/Build.Integration/ApiReference`; unchanged signature inventories use the exact frozen Design input recorded by those tests. Update a public baseline only with reviewed API changes, never to conceal a regression.
 
-`verify` is the canonical gate, not `dotnet test`: the managed checks are a dependency-free executable that also runs as a real packaged Native AOT consumer. Native failure cases are tested with `cargo test`. Linux CI is the only hosted platform for now; local macOS arm64 is a separate development profile.
+The canonical gate executes console suites and real database package JIT/AOT applications. `dotnet test` alone does not run these executable suites. CI additionally enforces security, no-Rust consumer, minimum CPU and runtime transfer checks. Record the commands, actual platform, source identities and limitations.
 
-Use focused PRs that explain the behavior, why it changed, real commands/platforms tested, and limitations. Never present self-review as independent approval or bypass branch protections. Public publishing and repository settings follow [the release guide](docs/releasing.md).
+Use focused PRs describing the problem, resulting behavior and evidence. Independent technical review is separate from self-review; preserve branch protections. This database scope batch creates candidates and does not publish new public packages.

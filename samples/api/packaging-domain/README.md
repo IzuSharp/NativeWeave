@@ -1,21 +1,24 @@
-# Independent domain package consumers
+# Independent database package consumers
 
 `Program.cs` is ordinary C# application source copied into a fresh SDK project by
 `tests/Packaging.Domain/consumer_cases.py`. The controller selects exact versions
-from the producer manifest; the sample never assumes a uniform transitive version
-or invokes Cargo. These are local candidate packages, not a public NuGet release.
+from the producer manifest. These are local database candidates; no public NuGet
+release is claimed. Applications choose their own hosting and use normal
+`PackageReference`, `dotnet build`, and Native AOT publishing.
 
 | Graph | Compilation symbols | Direct packages |
 | --- | --- | --- |
 | SQLite | `SQLITE` | `NativeWeave.Database.Sqlite` |
 | PostgreSQL | `POSTGRES` | `NativeWeave.Database.PostgreSql` |
-| Server | `SERVER` | `NativeWeave.Server` |
-| gRPC only | `SERVER;GRPC` | `NativeWeave.Server.Grpc` |
-| MCP only | `SERVER;MCP` | `NativeWeave.Server.Mcp` |
-| Combined | `SQLITE;POSTGRES;SERVER;GRPC;MCP` | Both providers, gRPC and MCP |
+| Both providers | `SQLITE;POSTGRES` | Both database provider packages |
 
-For a minimal consumer check inside the existing pristine SDK image, use the
-complete previous local closure in a new output directory:
+Every process inserts and reads typed entities, executes a strongly typed Fluent
+filter/order/limit query into independent DTOs, checks the expected row values,
+and closes its database owners. `DatabaseFixture.QueryDtos` is a plain C# business
+method that a console application, standard ASP.NET Core endpoint, or standard
+C# gRPC method can call. The sample has no server or protocol dependency.
+
+For a previous-candidate smoke check inside the pinned pristine SDK image:
 
 ```sh
 python3 src/Packaging.Domain/consume.py \
@@ -23,12 +26,8 @@ python3 src/Packaging.Domain/consume.py \
   --feed /destination --output /results/previous-smoke --mode smoke
 ```
 
-This runs normal restore/build/execution on the complete combined graph with
-SQLite and the explicitly configured real PostgreSQL service. It is the same
-callback used for local publication and fresh-process rollback.
-
-The advanced candidate check adds independent graph isolation, actual AOT,
-ordinary model/DTO/Handler edits and the focused assembled negatives:
+The complete candidate check uses three independent package graphs, actual JIT
+and Native AOT executions, and focused dependency/asset failure cases:
 
 ```sh
 python3 src/Packaging.Domain/consume.py \
@@ -36,22 +35,42 @@ python3 src/Packaging.Domain/consume.py \
   --feed /destination --output /results/candidate-full --mode full
 ```
 
-`AddedModels.cs.template` is copied as `AddedModels.cs` only **after** both
-restores complete. The controller enables `MANAGED_EDIT`, empties restore
-sources, rebuilds and executes normally, then publishes and executes Native
-AOT. Its new typed table/Entity/DTO are exercised through the existing native
-database and its new Handler through actual HTTP. Native identity is checked
-against the pre-edit output, rather than inferred from a successful build.
+`NW_TEST_POSTGRES` must identify the explicitly configured isolated PostgreSQL
+service. SQLite files are created outside the source tree. Each graph restores
+into its own fresh cache with exact package source mapping. Ordinary consumers
+use precompiled assets and never invoke Cargo.
 
-The bounded protobuf codec and HTTP/2 gRPC observation follow the accepted
-B22 ApiProbe; typed database metadata follows the existing ORM relation sample.
-HTTP/TLS and MCP use the existing Server public APIs. There is no custom FFI,
-managed server host or managed database-driver substitute. C# emits one terminal
-`B24_RESULT` only after domain owners close successfully. `--require-aot` checks
-the actual runtime witness; `--reject-abi` is an isolated negative entry that
-never creates a domain owner.
+The default `--consumer-environment pristine` requires the actual pinned SDK
+container without Rust. Local maintainers may pass `--consumer-environment local`
+to run the same database, package, AOT and negative checks with Rust commands
+removed from the consumer PATH and trapped. Local receipts explicitly record
+`pristine_machine: false`; a local run does not replace the required CI container
+or runtime-only transfer. Do not set a container identity variable to describe a
+local machine as pristine.
 
-See [the domain package guide](../../../docs/guides/packaging-domain.md) for the
-exact source-mapping, closure/version rules, prerequisites, transfer interface,
-and evidence/acceptance boundaries. An unexecuted example remains source-only;
-successful historical component tests are not results for these new packages.
+`AddedModels.cs.template` is copied only **after** the JIT and AOT restores. The
+controller empties restore sources, rebuilds and runs the added typed entity and
+Fluent DTO query, then publishes and executes Native AOT. The native assets must
+retain their exact pre-edit bytes. The executable reads `/proc/self/maps` after
+opening the real database and reports the basename and SHA256 of the database
+library actually mapped. The controller compares this with the selected candidate
+and rejects undeclared packages, runtime assemblies, native libraries, or compiler
+tools in the output.
+
+The same real database closure exercises the retained package task's malformed
+metadata, exact dependency, CPU/RID, path traversal, duplicate asset, and hash
+rejection checks. A bounded loopback NuGet V3 fixture also restores exact known
+versions marked unlisted into a fresh cache. It serves the candidate archives
+only; vulnerability auditing remains enabled against nuget.org. The release
+coordinator verifies whole-closure upgrade and rollback, builder/provenance
+identity, immutable versions, and refusal of unauthenticated registry signatures.
+
+The inherited `B24_RESULT` transport prefix carries a `task: DB-Scope-01` receipt
+only after database owners close successfully. `--require-aot` verifies actual
+Native AOT execution. `--reject-abi` exercises the existing incompatible ABI gate
+before any database owner is created.
+
+See [the database package guide](../../../docs/guides/packaging-domain.md) for
+producer/source identity, local closure versions, prerequisites, and transfer
+boundaries. Source inspection is not execution evidence; receipts remain bound
+to the exact new source, package, native, and executable identities.

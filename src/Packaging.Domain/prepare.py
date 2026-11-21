@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build two immutable, local-only 17-package domain closures from native inputs."""
+"""Build two immutable, local-only twelve-package database closures."""
 from __future__ import annotations
 
 import argparse
@@ -8,14 +8,12 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
-import xml.etree.ElementTree as ET
 
 import inventory
-from model import (CHANGED, COMMON, ENGINES, IDS, LEAVES, MANAGED, REPOSITORY, RID, ROOT,
+from model import (CHANGED, COMMON, ENGINES, IDS, LEAVES, MANAGED, REPOSITORY, RID, ROOT, TASK,
                    graph, json_bytes, load_manifest, module, save, sha, subclosure, versions)
 
 TASK_PROJECT = ROOT / "src/Packaging.Release/BuildTasks/NativeWeave.Packaging.Tasks.csproj"
-MCP_GENERATOR = ROOT / "src/Protocols.Mcp/Generator/NativeWeave.Server.Mcp.Generator.csproj"
 FLAGS = ["-p:UseSharedCompilation=false", "-nr:false", "-m:1"]
 PROJECT_FILES = {
     "NativeWeave.Interop.Abi": "Interop.Abi.csproj",
@@ -25,13 +23,9 @@ PROJECT_FILES = {
     "NativeWeave.Data.Streaming": "NativeWeave.Data.Streaming.csproj",
     "NativeWeave.Query.Binding": "NativeWeave.Query.Binding.csproj",
     "NativeWeave.Query.Generator": "NativeWeave.Query.Generator.csproj",
-    "NativeWeave.Server.Generator": "NativeWeave.Server.Generator.csproj",
     "NativeWeave.Database": "NativeWeave.Database.csproj",
     "NativeWeave.Database.Sqlite": "NativeWeave.Database.Sqlite.csproj",
     "NativeWeave.Database.PostgreSql": "NativeWeave.Database.PostgreSql.csproj",
-    "NativeWeave.Server": "NativeWeave.Server.csproj",
-    "NativeWeave.Server.Grpc": "NativeWeave.Server.Grpc.csproj",
-    "NativeWeave.Server.Mcp": "NativeWeave.Server.Mcp.csproj",
 }
 
 
@@ -67,35 +61,22 @@ class Commands:
 def managed_entries(identity):
     directory = ROOT / MANAGED[identity][0]
     result = {"LICENSE": ROOT / "LICENSE"}
-    if identity in ("NativeWeave.Query.Generator", "NativeWeave.Server.Generator"):
+    if identity == "NativeWeave.Query.Generator":
         result["tools/roslyn/" + identity + ".dll"] = directory / "bin/Release/netstandard2.0" / (identity + ".dll")
         result["buildTransitive/" + identity + ".targets"] = directory / "buildTransitive" / (identity + ".targets")
     else:
         for suffix in (".dll", ".xml"):
             result["lib/net11.0/" + identity + suffix] = directory / "bin/Release/net11.0" / (identity + suffix)
-    if identity == "NativeWeave.Server.Mcp":
-        result["analyzers/dotnet/cs/NativeWeave.Server.Mcp.Generator.dll"] = MCP_GENERATOR.parent / "bin/Release/netstandard2.0/NativeWeave.Server.Mcp.Generator.dll"
     return result
-
-
-def external_dependencies(identity):
-    if identity != "NativeWeave.Server":
-        return {}
-    project = managed_project(identity)
-    return {item.attrib["Include"]: item.attrib["Version"] for item in ET.parse(project).iter("PackageReference")}
 
 
 def build_managed(commands, version, native, candidate=False):
     asset_flags = ["-p:" + property_name + "=" + str(native[engine]["path"]) for property_name, engine in (
-        ("NativeWeaveSqliteAssetPath", "database.sqlite"), ("NativeWeavePostgresAssetPath", "database.postgresql"),
-        ("NativeWeaveServerAssetPath", "server"))]
+        ("NativeWeaveSqliteAssetPath", "database.sqlite"), ("NativeWeavePostgresAssetPath", "database.postgresql"))]
     selected = CHANGED if candidate else tuple(MANAGED)
     label = "candidate" if candidate else "previous"
     for identity in selected:
         project = managed_project(identity)
-        if identity == "NativeWeave.Server.Mcp":
-            commands.run(label + "-Mcp.Generator-build", ["dotnet", "build", MCP_GENERATOR, "-c", "Release", "--no-restore",
-                         "-p:Version=" + version, "-p:BuildProjectReferences=false", *FLAGS])
         commands.run(label + "-" + identity + "-build", ["dotnet", "build", project, "-c", "Release", "--no-restore",
                      "-p:Version=" + version, "-p:BuildProjectReferences=false", *asset_flags, *FLAGS])
     # This catches stale hardcoded profile versions before packaging, without
@@ -120,7 +101,6 @@ def compose(output, label, version_map, native_build, native, source_commit, pre
     for identity in IDS:
         version = version_map[identity]
         dependencies = rows[identity]["dependencies"]
-        external = external_dependencies(identity)
         source = source_commit
         if previous is not None and identity in COMMON:
             original = next(item for item in previous["packages"] if item["id"] == identity)
@@ -148,17 +128,14 @@ def compose(output, label, version_map, native_build, native, source_commit, pre
                 if identity in CHANGED:
                     target = ROOT / "src/Packaging.Release/buildTransitive/NativeWeave.Packaging.targets"
                     entries["buildTransitive/" + identity + ".targets"] = target
-                    if identity == "NativeWeave.Server.Mcp":
-                        entries["buildTransitive/" + identity + ".targets"] = ROOT / MANAGED[identity][0] / "buildTransitive/NativeWeave.Server.Mcp.targets"
-                        entries["nativeweave/NativeWeave.Mcp.Packaging.targets"] = target
                     entries["nativeweave/closure.json"] = json_bytes(subclosure(closure, identity))
                     for suffix in (".dll", ".xml"):
                         entries["tools/net11.0/NativeWeave.Packaging.Tasks" + suffix] = TASK_PROJECT.parent / "bin/Release/net11.0" / ("NativeWeave.Packaging.Tasks" + suffix)
-            archive = packing.pack(feed, identity, version, entries, {**dependencies, **external}, (REPOSITORY, source))
+            archive = packing.pack(feed, identity, version, entries, dependencies, (REPOSITORY, source))
         record = {"id": identity, "version": version, "dependencies": dependencies,
                   "unsigned_entries": compat.package_entries(archive), "upload_archive_sha256": sha(archive),
                   "source_commit": source, "repository": REPOSITORY}
-        handoff = {"id": identity, "version": version, "dependencies": dependencies, "externalDependencies": external,
+        handoff = {"id": identity, "version": version, "dependencies": dependencies, "externalDependencies": {},
                    "path": archive.relative_to(output).as_posix(), "sha256": record["upload_archive_sha256"], "sourceCommit": source}
         if identity in LEAVES:
             descriptor = rows[identity]["nativeAssets"][0]
@@ -196,7 +173,10 @@ def main():
     commands = Commands(output)
     source = commands.run("source-commit", ["git", "rev-parse", "HEAD"]).strip()
     if commands.run("source-state", ["git", "status", "--porcelain", "--untracked-files=normal"]).strip():
-        raise ValueError("Final B24 package provenance requires a clean committed source")
+        raise ValueError("Final database package provenance requires a clean committed source")
+    names = commands.run("source-inventory", ["git", "ls-files", "--", "src", "Directory.Build.props", "Directory.Build.targets",
+                         "Cargo.toml", "Cargo.lock", "global.json", "rust-toolchain.toml"]).splitlines()
+    source_files = {name: sha(ROOT / name) for name in names}
     if commands.run("sdk", ["dotnet", "--version"]).strip() != "11.0.100":
         raise ValueError("Use the pinned .NET SDK 11.0.100")
     native_build, native = inventory.collect(args.native_manifest)
@@ -207,7 +187,7 @@ def main():
     # Restore the committed project graph at its existing project identities;
     # private facade Version changes are compiled later with --no-restore.
     projects = [managed_project(identity) for identity in MANAGED]
-    for index, project in enumerate([*projects, MCP_GENERATOR, TASK_PROJECT]):
+    for index, project in enumerate([*projects, TASK_PROJECT]):
         commands.run("restore-" + str(index), ["dotnet", "restore", project, "--locked-mode", *FLAGS])
     commands.run("packaging-task-build", ["dotnet", "build", TASK_PROJECT, "-c", "Release", "--no-restore", *FLAGS])
     build_managed(commands, args.previous_version, native)
@@ -217,12 +197,12 @@ def main():
     if any(sha(Path(path)) != expected for path, expected in common_files.items()):
         raise ValueError("Candidate build unexpectedly rebuilt retained common bytes")
     candidate = compose(output, "candidate", candidate_versions, native_build, native, source, previous)
-    names = commands.run("source-inventory", ["git", "ls-files", "--", "src", "Directory.Build.props", "Directory.Build.targets",
-                         "Cargo.toml", "Cargo.lock", "global.json", "rust-toolchain.toml"]).splitlines()
-    save(output / "source-inventory.json", {"sourceCommit": source, "files": {name: sha(ROOT / name) for name in names}})
-    if commands.run("final-source-state", ["git", "status", "--porcelain", "--untracked-files=normal"]).strip():
-        raise ValueError("Source changed while constructing B24 packages")
-    manifest = {"schemaVersion": 1, "scope": "local-only", "rid": RID, "sourceCommit": source, "sourceDirty": False,
+    final_source = commands.run("final-source-commit", ["git", "rev-parse", "HEAD"]).strip()
+    if (commands.run("final-source-state", ["git", "status", "--porcelain", "--untracked-files=normal"]).strip()
+            or final_source != source or {name: sha(ROOT / name) for name in names} != source_files):
+        raise ValueError("Source changed while constructing database packages")
+    save(output / "source-inventory.json", {"sourceCommit": source, "files": source_files})
+    manifest = {"schemaVersion": 1, "task": TASK, "scope": "local-only", "rid": RID, "sourceCommit": source, "sourceDirty": False,
                 "nativeSourceCommit": native_build["sourceCommit"], "nativeInputManifestSha256": sha(args.native_manifest),
                 "sourceInventory": "source-inventory.json", "previous": previous, "candidate": candidate,
                 "publicDomainReleaseAccepted": False, "newDomainSignerAuthenticated": False,
@@ -248,7 +228,7 @@ def main():
     save(evidence / "evidence-index.json", {"schemaVersion": 1,
          "scope": "Source/closure/native/license audit only; excludes package payloads, test databases, private keys and consumer caches.",
          "files": {path.relative_to(evidence).as_posix(): sha(path) for path in sorted(evidence.rglob("*")) if path.is_file()}})
-    print("Prepared two exact 17-package local closures; actual destination/pristine/runtime consumption remains required.", flush=True)
+    print("Prepared two exact twelve-package database closures; actual destination/pristine/runtime consumption remains required.", flush=True)
 
 
 if __name__ == "__main__":

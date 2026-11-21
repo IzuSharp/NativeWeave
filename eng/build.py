@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Maintainer build and isolated NuGet/AOT verification; Python 3.9+, no pip dependencies."""
+"""Maintainer Linux database build, regression and ordinary NuGet/AOT consumption."""
 import argparse
 import hashlib
 import json
@@ -10,14 +10,11 @@ import re
 import shutil
 import subprocess
 import sys
-import tempfile
-import xml.etree.ElementTree as ET
-import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 ARTIFACTS = ROOT / "artifacts"
-PROJECT = ROOT / "src/NativeWeave.HelloWorld/NativeWeave.HelloWorld.csproj"
 LOGS = ARTIFACTS / "logs"
+OUTPUT = ARTIFACTS / "db-scope"
 
 
 def run(args, label, cwd=ROOT, env=None, json_stdout=False):
@@ -29,278 +26,158 @@ def run(args, label, cwd=ROOT, env=None, json_stdout=False):
     logged = result.stdout + ("\n[stderr]\n" + result.stderr if json_stdout and result.stderr else "")
     (LOGS / (label + ".log")).write_text(logged, encoding="utf-8")
     if result.returncode:
-        print(logged, flush=True)
+        print(logged[-16000:], flush=True)
         raise RuntimeError(f"{label} failed ({result.returncode}); see artifacts/logs/{label}.log")
-    if "--message-format=json-render-diagnostics" not in args:
+    if not json_stdout:
         print(result.stdout[-3000:], end="", flush=True)
     return result.stdout
 
 
-def digest(file):
-    return hashlib.sha256(Path(file).read_bytes()).hexdigest()
+def digest(path):
+    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
 
-def host():
-    pair = (platform.system(), platform.machine().lower())
-    supported = {("Darwin", "arm64"): ("osx-arm64", ".dylib"),
-                 ("Linux", "x86_64"): ("linux-x64", ".so")}
-    if pair not in supported:
-        raise RuntimeError(f"Bootstrap supports macOS arm64 development and Linux x64 only; found {pair}")
-    return supported[pair]
+def export_fixture_results(external, destination):
+    """Export bounded result JSON without private configuration or raw argv/logs."""
+    allowed = {"progress.json", "receipt.json", "result.json", "summary.json", "status.json", "independent-sql.json",
+               "resolved-archive-hashes.json"}
+    private_keys = {"argv", "command", "config", "configuration", "database", "connectionstring",
+                    "connection_string", "password", "secret", "cursorkey", "cursor_key"}
+
+    def safe(value):
+        if isinstance(value, dict):
+            return {key: safe(item) for key, item in value.items() if key.lower() not in private_keys}
+        if isinstance(value, list):
+            return [safe(item) for item in value]
+        if isinstance(value, str):
+            return re.sub(r"postgres(?:ql)?://[^\s\"'<>]+", "<database-uri>", value)
+        return value
+
+    for path in external.rglob("*.json"):
+        relative = path.relative_to(external)
+        if path.name not in allowed or any(part in (
+                "consumer-cache", "dotnet-home", "consumers", "metadata", "artifacts", "postgres-data")
+                for part in relative.parts):
+            continue
+        target = destination / relative
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps({"sanitized": True, "source_artifact_sha256": digest(path),
+                                      "data": safe(json.loads(path.read_text()))}, indent=2) + "\n")
+
+
+def source():
+    return {"commit": run(["git", "rev-parse", "HEAD"], "source-commit").strip(),
+            "tree": run(["git", "rev-parse", "HEAD^{tree}"], "source-tree").strip()}
 
 
 def native():
-    rid, extension = host()
-    if rid == "linux-x64":
-        # Explicit maintainer build only. Clear the package input before invoking
-        # Cargo, so a failed/cancelled build cannot package a previous success.
-        destination = ARTIFACTS / "native"
-        if destination.exists():
-            shutil.rmtree(destination)
-        provenance = ARTIFACTS / "native-build-manifest.json"
-        provenance.unlink(missing_ok=True)
-        # Preserve the existing explicit workspace build: source-only managed
-        # provider projects consume their already implemented task-owned assets
-        # from target/release. Only HelloWorld enters this release's package.
-        run(["cargo", "build", "--workspace", "--release", "--locked"], "native-workspace")
-        # The two Database facades use independently selected provider profiles.
-        # Stage their maintainer-built inputs before the shared managed solution;
-        # this does not add either module to the HelloWorld release candidate.
-        if (ROOT / "native/database/host/Cargo.toml").exists():
-            for feature, provider in (("sqlite", "sqlite"), ("postgres", "postgresql")):
-                staged = ROOT / "target/release" / f"libnw_database_{provider}.so"
-                staged.unlink(missing_ok=True)
-                run(["cargo", "build", "-p", "nativeweave-database-host", "--release",
-                     "--locked", "--no-default-features", "--features", feature],
-                    f"database-{provider}-profile")
-                shutil.copy2(ROOT / "target/release/libnativeweave_database_host.so", staged)
-        profile = ROOT / "src/Build.Integration/profiles/hello-world-linux.json"
-        builder = ROOT / "src/Build.Integration/build_native.py"
-        output = run([sys.executable, builder, "build", "--root", ROOT, "--profile", profile], "native-build")
-        receipt = json.loads(output.strip().splitlines()[-1])
-        manifest = Path(receipt["manifest"])
-        if digest(manifest) != receipt["sha256"]:
-            raise RuntimeError("Build provenance changed before staging")
-        run([sys.executable, builder, "verify", "--root", ROOT, "--profile", profile,
-             "--manifest", manifest], "native-provenance")
-        metadata = json.loads(manifest.read_text())
-        item = metadata["files"][0]
-        target = destination / Path(item["path"]).relative_to("runtimes")
-        target.parent.mkdir(parents=True)
-        shutil.copy2(manifest.parent / item["path"], target)
-        shutil.copy2(manifest, provenance)
-        return target
-    output = run(["cargo", "build", "--release", "--locked", "--message-format=json-render-diagnostics"], "native-build")
-    libraries = []
-    for line in output.splitlines():
-        if not line.startswith("{"):
-            continue
-        item = json.loads(line)
-        if item.get("reason") == "compiler-artifact" and item["target"]["name"] == "nativeweave_hello":
-            libraries.extend(Path(file) for file in item["filenames"] if file.endswith(extension))
-    if len(libraries) != 1:
-        raise RuntimeError("Cargo did not return exactly one native library artifact")
-    destination = ARTIFACTS / "native"
-    if destination.exists():
-        shutil.rmtree(destination)
-    target = destination / rid / "native" / libraries[0].name
-    target.parent.mkdir(parents=True)
-    shutil.copy2(libraries[0], target)
-    return target
+    output = OUTPUT / "native-build"
+    run([sys.executable, "eng/task07_native.py", "--output", output], "database-native")
+    manifest = json.loads((output / "manifest.json").read_text())
+    # Source project consumers use the same independently built provider bytes.
+    target = ROOT / "target/release"
+    target.mkdir(parents=True, exist_ok=True)
+    for asset in manifest["assets"]:
+        path = Path(asset["path"])
+        if digest(path) != asset["sha256"]:
+            raise RuntimeError("Native candidate changed before source staging")
+        shutil.copy2(path, target / path.name)
+    return output / "manifest.json"
 
 
-def pack(version, library):
-    tracked = run(["git", "ls-files", "--cached", "--others", "--exclude-standard"], "source-inventory")
-    files = {name: digest(ROOT / name) for name in sorted(set(tracked.splitlines())) if (ROOT / name).is_file()}
-    metadata = {
-        "schemaVersion": 1, "packageId": "NativeWeave.HelloWorld", "packageVersion": version,
-        "status": "experimental-bootstrap", "abiMajor": 1, "rid": host()[0],
-        "nativePath": "runtimes/" + library.relative_to(ARTIFACTS / "native").as_posix(),
-        "nativeSha256": digest(library), "sourceCommit": run(["git", "rev-parse", "HEAD"], "source-commit").strip(),
-        "sourceDirty": bool(run(["git", "status", "--porcelain"], "source-status").strip()),
-        "sourceFilesSha256": files, "cargoLockSha256": digest(ROOT / "Cargo.lock"),
-        "rustc": run(["rustc", "-Vv"], "rustc").strip(),
-        "cargo": run(["cargo", "--version"], "cargo").strip(),
-        "dotnetSdk": run(["dotnet", "--version"], "dotnet").strip(),
-        "os": platform.platform(), "features": [], "thirdPartyCargoDependencies": [],
-    }
-    if host()[0] == "linux-x64":
-        provenance = json.loads((ARTIFACTS / "native-build-manifest.json").read_text())
-        if provenance["files"][0]["sha256"] != metadata["nativeSha256"]:
-            raise RuntimeError("Package native bytes differ from the maintainer build provenance")
-        metadata["maintainerBuild"] = provenance
-    (ARTIFACTS / "manifest.json").write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")
-    packages = ARTIFACTS / "packages"
-    if packages.exists():
-        shutil.rmtree(packages)
-    packages.mkdir(parents=True)
-    run(["dotnet", "pack", PROJECT, "-c", "Release", "--no-restore", "-o", packages,
-         f"-p:PackageVersion={version}"], "pack")
-    package = packages / f"NativeWeave.HelloWorld.{version}.nupkg"
-    with zipfile.ZipFile(package) as archive:
-        required = {metadata["nativePath"], "lib/net11.0/NativeWeave.HelloWorld.dll",
-                    "lib/net11.0/NativeWeave.HelloWorld.xml", "README.md", "LICENSE",
-                    "THIRD_PARTY_NOTICES.md", "nativeweave/manifest.json"}
-        if not required.issubset(archive.namelist()):
-            raise RuntimeError(f"Missing package entries: {required - set(archive.namelist())}")
-        if hashlib.sha256(archive.read(metadata["nativePath"])).hexdigest() != metadata["nativeSha256"]:
-            raise RuntimeError("Native package bytes differ from verified build")
-        if any(name.startswith(("build/", "buildTransitive/", "contentFiles/")) for name in archive.namelist()):
-            raise RuntimeError("Bootstrap must not ship consumer build hooks")
-        nuspec = ET.fromstring(archive.read("NativeWeave.HelloWorld.nuspec"))
-        if any(element.tag.rsplit("}", 1)[-1] == "dependency" for element in nuspec.iter()):
-            raise RuntimeError("Bootstrap unexpectedly added a runtime package dependency")
-    shutil.copy2(ARTIFACTS / "manifest.json", packages / "manifest.json")
-    sums = "".join(f"{digest(file)}  {file.name}\n" for file in sorted(packages.iterdir()) if file.is_file())
-    (packages / "SHA256SUMS").write_text(sums, encoding="utf-8")
-    return package
+def pack(version, manifest):
+    run([sys.executable, "src/Packaging.Domain/prepare.py", "--output", OUTPUT / "prepared",
+         "--previous-version", version + ".1", "--candidate-version", version + ".2",
+         "--native-manifest", manifest], "database-packages")
 
 
-def consume(version, feed):
-    rid, extension = host()
-    package = feed.resolve() / f"NativeWeave.HelloWorld.{version}.nupkg"
-    with zipfile.ZipFile(package) as archive:
-        metadata = json.loads(archive.read("nativeweave/manifest.json"))
-    if metadata["rid"] != rid:
-        raise RuntimeError("Package RID differs from consumer host")
-    # Outside the checkout: no repository props, targets, source projects or native outputs.
-    with tempfile.TemporaryDirectory(prefix="nativeweave-consumer-") as temporary:
-        work = Path(temporary)
-        shutil.copy2(ROOT / "global.json", work / "global.json")
-        config = ET.Element("configuration")
-        sources = ET.SubElement(config, "packageSources")
-        ET.SubElement(sources, "clear")
-        ET.SubElement(sources, "add", key="candidate", value=str(feed.resolve()))
-        ET.SubElement(sources, "add", key="nuget.org", value="https://api.nuget.org/v3/index.json")
-        mapping = ET.SubElement(config, "packageSourceMapping")
-        local = ET.SubElement(mapping, "packageSource", key="candidate")
-        ET.SubElement(local, "package", pattern="NativeWeave.*")
-        public = ET.SubElement(mapping, "packageSource", key="nuget.org")
-        ET.SubElement(public, "package", pattern="*")
-        ET.ElementTree(config).write(work / "NuGet.Config", encoding="utf-8", xml_declaration=True)
-        env = os.environ.copy()
-        env["NUGET_PACKAGES"] = str(work / "packages")
-        env["DOTNET_CLI_TELEMETRY_OPTOUT"] = "1"
-        # Preserve the AOT C linker; hide Rust tool paths and fail any Rust invocation.
-        trap = work / "no-rust"
-        trap.mkdir()
-        env["NATIVEWEAVE_RUST_INVOCATIONS"] = str(work / "rust-invocations")
-        for name in ("cargo", "rustc", "rustup"):
-            executable = trap / name
-            executable.write_text('#!/bin/sh\necho "$0" >> "$NATIVEWEAVE_RUST_INVOCATIONS"\necho "Unexpected Rust invocation" >&2\nexit 97\n', encoding="utf-8")
-            executable.chmod(0o755)
-        entries = [entry for entry in env.get("PATH", "").split(os.pathsep)
-                   if entry and not any((Path(entry) / name).exists() for name in ("cargo", "rustc", "rustup"))]
-        env["PATH"] = os.pathsep.join([str(trap)] + entries)
-        for key in ("CARGO_HOME", "RUSTUP_HOME", "RUSTFLAGS", "LD_LIBRARY_PATH", "DYLD_LIBRARY_PATH", "NUGET_API_KEY"):
-            env.pop(key, None)
-        for name, source in (("HelloWorld", ROOT / "samples/PackageConsumer/Program.cs"),
-                             ("InteropTests", ROOT / "tests/NativeWeave.HelloWorld.Tests/Program.cs")):
-            app = work / name
-            app.mkdir()
-            project = app / f"{name}.csproj"
-            project.write_text((ROOT / "samples/PackageConsumer/PackageConsumer.csproj").read_text().replace(
-                "[$(NativeWeaveVersion)]", f"[{version}]"), encoding="utf-8")
-            shutil.copy2(source, app / "Program.cs")
-            run(["dotnet", "build", project, "-c", "Release"], name + "-package-build", cwd=work, env=env)
-            output = run(["dotnet", "run", "--project", project, "-c", "Release", "--no-build"], name + "-package-run", cwd=work, env=env)
-            if name == "HelloWorld" and output.strip() != "Hello, World! From Rust.":
-                raise RuntimeError("Unexpected greeting from packaged native asset")
-            publish = app / "publish"
-            run(["dotnet", "publish", project, "-c", "Release", "-r", rid,
-                 "-p:PublishAot=true", "-p:IlcTreatWarningsAsErrors=true", "-o", publish],
-                name + "-aot-publish", cwd=work, env=env)
-            native_file = publish / ("libnativeweave_hello" + extension)
-            if digest(native_file) != metadata["nativeSha256"]:
-                raise RuntimeError("Consumer native bytes changed")
-            run([publish / name], name + "-aot-run", cwd=work, env=env)
-            if (publish / f"{name}.dll").exists():
-                raise RuntimeError("Expected a real native AOT application")
-            retained = ARTIFACTS / "publish" / name
-            if retained.exists():
-                shutil.rmtree(retained)
-            shutil.copytree(publish, retained)
-        if (work / "rust-invocations").exists():
-            raise RuntimeError("A consumer attempted to invoke Rust")
-        report = {"status": "passed", "rid": rid, "package": package.name,
-                  "packageSha256": digest(package), "nativeSha256": metadata["nativeSha256"],
-                  "ridFreeBuildAndRun": True, "nativeAotExecuted": True,
-                  "isolatedNugetCache": True, "outsideSourceTree": True,
-                  "rustInvocationTrap": True, "pristineMachine": False}
-        (ARTIFACTS / "consumer-result.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+def consume(environment):
+    prepared = OUTPUT / "prepared"
+    run([sys.executable, "tests/Packaging.Domain/consumer_cases.py", "--manifest", prepared / "manifest.json",
+         "--closure", "candidate", "--feed", prepared / "candidate/feed",
+         "--output", OUTPUT / (environment + "-consumer"), "--mode", "full",
+         "--consumer-environment", environment], "database-" + environment + "-consumer")
 
 
-def verify(version, write_docs=False):
-    for filename in ("verification.json", "consumer-result.json"):
-        (ARTIFACTS / filename).unlink(missing_ok=True)
+def verify(version, design, plan):
+    if not os.environ.get("NW_TEST_POSTGRES"):
+        raise RuntimeError("Set NW_TEST_POSTGRES to a disposable real PostgreSQL 18 test server")
+    os.environ["NATIVEWEAVE_TEST_POSTGRES_URL"] = os.environ["NW_TEST_POSTGRES"]
+    if run(["git", "status", "--porcelain"], "initial-status").strip():
+        raise RuntimeError("Commit a clean candidate before collecting source-bound evidence")
+    initial = source()
     standard = json.loads((ROOT / "public-api-standard.json").read_text())
     if digest(ROOT / standard["localPath"]) != standard["sha256"]:
         raise RuntimeError("Pinned public API standard bytes changed; review adoption explicitly")
-    closure = json.loads(run(["cargo", "metadata", "--format-version=1", "--locked", "--no-deps"], "cargo-closure", json_stdout=True))
-    # This verifier publishes only HelloWorld. Other task-owned crates share the
-    # workspace but are not part of that package's native dependency closure.
-    # Keep the original no-third-party-dependency invariant for the actual asset.
-    hello = [package for package in closure["packages"]
-             if Path(package["manifest_path"]).resolve() == (ROOT / "native/hello-world/Cargo.toml").resolve()]
-    if len(hello) != 1 or hello[0]["dependencies"]:
-        raise RuntimeError("HelloWorld dependency changes require an advisory/license gate and a truthful package inventory")
-    run([sys.executable, "-m", "unittest", "discover", "-s", "tests/Tooling", "-v"], "release-tool-tests")
+    run([sys.executable, "eng/verify_db_scope.py"], "database-scope")
+    run([sys.executable, "-m", "unittest", "discover", "-s", "tests/Tooling", "-v"], "build-tool-tests")
     run(["cargo", "fmt", "--all", "--", "--check"], "rust-format")
     run(["cargo", "clippy", "--workspace", "--all-targets", "--locked", "--", "-D", "warnings"], "clippy")
     run(["cargo", "test", "--workspace", "--release", "--locked"], "rust-tests")
-    library = native()
-    run(["dotnet", "restore", "NativeWeave.slnx", "--locked-mode"], "restore")
-    run(["dotnet", "build", "NativeWeave.slnx", "-c", "Release", "--no-restore"], "build")
+    manifest = native()
+    msbuild = ["-m:1", "-nr:false", "-p:UseSharedCompilation=false"]
+    run(["dotnet", "restore", "NativeWeave.slnx", "--locked-mode", "--disable-parallel", *msbuild], "restore")
+    run(["dotnet", "build", "NativeWeave.slnx", "-c", "Release", "--no-restore", *msbuild], "build")
     run(["dotnet", "format", "NativeWeave.slnx", "--verify-no-changes", "--no-restore"], "dotnet-format")
-    run(["dotnet", "run", "--project", "samples/HelloWorld", "-c", "Release", "--no-build"], "source-hello")
-    run(["dotnet", "run", "--project", "tests/NativeWeave.HelloWorld.Tests", "-c", "Release", "--no-build"], "interop-tests")
-    docs = ["dotnet", "run", "--project", "tools/ApiDocs", "-c", "Release", "--no-build", "--", str(ROOT)]
-    if write_docs:
-        docs.append("--write")
-    run(docs, "api-docs")
-    # Compile the implemented Core surface, then gate exact symbols/XML and
-    # build its pinned DocFX reference. Publication remains a separate task.
-    for component in ("core", "analyzers", "metadata"):
+    for component in ("core",):
         run([sys.executable, "src/Build.Integration/compose_docs.py", "--config",
              f"src/Build.Integration/api/{component}.json", "--output", f"artifacts/docs/{component}-site"],
             component + "-api-docs")
-    package = pack(version, library)
-    consume(version, package.parent)
+    try:
+        run([sys.executable, "eng/database_regressions.py", "--design", design, "--plan", plan,
+             "--output", OUTPUT / "regressions"], "database-regressions")
+    finally:
+        export_fixture_results(OUTPUT / "regressions", OUTPUT / "regression-evidence")
+    pack(version, manifest)
+    for name, driver in (("database-lifecycle", "tests/Verification.EndToEnd/api_probe.py"),
+                         ("database-business", "tests/Reference.TaskService/package_probe.py")):
+        external = ROOT.parent / "_consumers" / name
+        try:
+            run([sys.executable, driver, "--feed", OUTPUT / "prepared/candidate/feed",
+                 "--version", version + ".2", "--output", external], name)
+        finally:
+            export_fixture_results(external, OUTPUT / name)
+    consume("local")
     run(["git", "diff", "--check"], "diff-check")
-    report = {"status": "passed", "rid": host()[0], "version": version,
-              "packageSha256": digest(package), "nativeSha256": digest(library),
-              "checks": ["rustfmt", "clippy", "rust-tests", "locked-restore", "managed-build", "dotnet-format",
-                         "source-interop-tests", "compiled-api-and-xml", "nuget-layout", "isolated-package-consumer", "native-aot-run"],
-              "independentReview": False, "publiclyPublished": False}
-    (ARTIFACTS / "verification.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print("PASS: verified source, package, isolated consumption and actual Native AOT execution.")
+    if run(["git", "status", "--porcelain"], "final-status").strip() or source() != initial:
+        raise RuntimeError("Source or dependency locks changed during verification")
+    report = {"task": "DB-Scope-01", "status": "passed", "rid": "linux-x64", "source": initial,
+              "versionBase": version, "nativeManifestSha256": digest(manifest),
+              "candidateManifestSha256": digest(OUTPUT / "prepared/manifest.json"),
+              "checks": ["scope", "rustfmt", "clippy", "rust-workspace-tests", "locked-restore",
+                         "managed-workspace-build", "dotnet-format", "compiled-api-and-xml",
+                         "postgresql-and-sqlite-regressions", "nuget-closure", "external-fluent-dto-jit-and-aot"],
+              "pristineMachine": False, "independentReview": False, "publiclyPublished": False}
+    (ARTIFACTS / "verification.json").write_text(json.dumps(report, indent=2) + "\n")
+    print("PASS: retained database workspaces, actual PostgreSQL/SQLite, package Fluent DTO and Native AOT consumers.")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command", choices=["native", "pack", "verify", "consume"])
-    parser.add_argument("--version", default="0.1.0-preview.1")
-    parser.add_argument("--feed", type=Path, default=ARTIFACTS / "packages")
-    parser.add_argument("--write-docs", action="store_true")
+    parser.add_argument("--version", default="0.1.0-db-scope.1")
+    parser.add_argument("--design", type=Path, default=ARTIFACTS / "frozen-design")
+    parser.add_argument("--plan", type=Path, default=ARTIFACTS / "frozen-plan")
+    parser.add_argument("--consumer-environment", choices=["local", "pristine"], default="pristine")
     args = parser.parse_args()
-    if not re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?", args.version):
-        parser.error("Use a canonical major.minor.patch[-prerelease] version without a leading v")
+    if (platform.system(), platform.machine().lower()) != ("Linux", "x86_64"):
+        parser.error("This database acceptance row is Linux x64 only")
+    if not re.fullmatch(r"(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*", args.version):
+        parser.error("Use a canonical prerelease version base")
     ARTIFACTS.mkdir(exist_ok=True)
     if args.command == "native":
         native()
     elif args.command == "verify":
-        verify(args.version, args.write_docs)
+        verify(args.version, args.design.resolve(), args.plan.resolve())
     elif args.command == "consume":
-        consume(args.version, args.feed)
+        consume(args.consumer_environment)
     else:
-        library = native()
-        run(["dotnet", "restore", PROJECT, "--locked-mode"], "pack-restore")
-        pack(args.version, library)
+        pack(args.version, native())
 
 
 if __name__ == "__main__":
     try:
         main()
-    except (RuntimeError, OSError, ValueError, zipfile.BadZipFile) as error:
+    except (RuntimeError, OSError, ValueError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         sys.exit(1)

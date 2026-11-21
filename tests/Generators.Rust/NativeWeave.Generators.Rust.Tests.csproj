@@ -1,7 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>Exe</OutputType><AssemblyName>NativeWeave.Generators.Rust.Tests</AssemblyName>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-  </PropertyGroup>
-  <ItemGroup><Compile Include="Program.cs" /><ProjectReference Include="../../src/Generators.Rust/NativeWeave.Generators.Rust.csproj" /></ItemGroup>
-</Project>

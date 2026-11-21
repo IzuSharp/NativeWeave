@@ -17,7 +17,6 @@
   <ItemGroup>
     <PackageReference Include="NativeWeave.Database.Sqlite" Version="$(NativeWeavePackageVersion)" />
     <PackageReference Include="NativeWeave.Database.PostgreSql" Version="$(NativeWeavePackageVersion)" Condition="'$(ReferenceIncludePostgreSql)' == 'true'" />
-    <PackageReference Include="NativeWeave.Server" Version="$(NativeWeavePackageVersion)" />
     <Compile Include="../../../src/Reference.TaskService/*.cs" Link="Application/%(Filename)%(Extension)" />
     <EmbeddedResource Include="../../../src/Reference.TaskService/Migrations/*.sql" Link="Migrations/%(Filename)%(Extension)" />
   </ItemGroup>

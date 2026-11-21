@@ -19,10 +19,7 @@
     <ProjectReference Include="../Interop.Abi/Interop.Abi.csproj" />
     <InternalsVisibleTo Include="NativeWeave.Interop.Execution.Tests" />
     <InternalsVisibleTo Include="NativeWeave.Interop.Execution.Sample" />
-    <InternalsVisibleTo Include="NativeWeave.Engines.SyncProof" />
-    <InternalsVisibleTo Include="NativeWeave.Engines.AsyncProof" />
     <InternalsVisibleTo Include="NativeWeave.Verification.Interop" />
-    <InternalsVisibleTo Include="NativeWeave.Verification.ExtensionProof" />
     <InternalsVisibleTo Include="NativeWeave.Interop.Async.Tests" />
     <InternalsVisibleTo Include="NativeWeave.Interop.Async.Sample" />
     <InternalsVisibleTo Include="NativeWeave.Interop.Callbacks.Tests" />
@@ -34,16 +31,6 @@
     <InternalsVisibleTo Include="NativeWeave.Interop.Lifetime.Sample" />
     <InternalsVisibleTo Include="NativeWeave.Interop.Memory.Tests" />
     <InternalsVisibleTo Include="NativeWeave.Interop.Memory.Sample" />
-    <InternalsVisibleTo Include="NativeWeave.Generators.CSharp.Consumer" />
-    <InternalsVisibleTo Include="NativeWeave.Generators.CSharp.Sample" />
-    <InternalsVisibleTo Include="NativeWeave.Server" />
-    <InternalsVisibleTo Include="NativeWeave.Server.Grpc" />
-    <InternalsVisibleTo Include="NativeWeave.Server.Mcp" />
-    <InternalsVisibleTo Include="NativeWeave.Server.Grpc.Tests" />
-    <InternalsVisibleTo Include="NativeWeave.Server.Mcp.Tests" />
-    <InternalsVisibleTo Include="NativeWeave.Server.Streaming.Tests" />
-    <InternalsVisibleTo Include="NativeWeave.Server.Application.Tests" />
-    <InternalsVisibleTo Include="NativeWeave.Server.Native.Tests" />
     <InternalsVisibleTo Include="NativeWeave.Database" />
     <InternalsVisibleTo Include="NativeWeave.Data.NativeHost.Tests" />
     <InternalsVisibleTo Include="NativeWeave.Data.Migrations.Tests" />

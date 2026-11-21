@@ -1,6 +1,6 @@
 # NativeWeave.Data API reference
 
-Generated from the compiled product assembly and its XML comments by `tests/Data.Abstractions/ApiCheck`. B01 data descriptors and transport only; database provider execution belongs to downstream tasks.
+Generated from the compiled product assembly and its XML comments by `tests/Data.Abstractions/ApiCheck`. Covers data descriptors and transport, static model annotations, and shared ORM errors. Database provider execution remains in the database assemblies. Exact declarations retain the pinned Design identity in `public-api.expected.json`.
 
 ## `F:NativeWeave.Data.DatabaseErrorKind.ConcurrentUse`
 
@@ -240,7 +240,7 @@ public static NativeWeave.Data.ValueCodec<T?> NativeWeave.Data.Codecs.Nullable<T
 public NativeWeave.Data.ColumnOptions.ColumnOptions()
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.ColumnOptions.Equals(NativeWeave.Data.ColumnOptions)`
 
@@ -248,7 +248,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public bool NativeWeave.Data.ColumnOptions.Equals(NativeWeave.Data.ColumnOptions? other)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.ColumnOptions.Equals(System.Object)`
 
@@ -256,7 +256,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public override bool NativeWeave.Data.ColumnOptions.Equals(object? obj)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.ColumnOptions.GetHashCode`
 
@@ -264,7 +264,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public override int NativeWeave.Data.ColumnOptions.GetHashCode()
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.ColumnOptions.ToString`
 
@@ -272,7 +272,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public override string NativeWeave.Data.ColumnOptions.ToString()
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.ColumnOptions.op_Equality(NativeWeave.Data.ColumnOptions,NativeWeave.Data.ColumnOptions)`
 
@@ -280,7 +280,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public static bool NativeWeave.Data.ColumnOptions.operator ==(NativeWeave.Data.ColumnOptions? left, NativeWeave.Data.ColumnOptions? right)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.ColumnOptions.op_Inequality(NativeWeave.Data.ColumnOptions,NativeWeave.Data.ColumnOptions)`
 
@@ -288,7 +288,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public static bool NativeWeave.Data.ColumnOptions.operator !=(NativeWeave.Data.ColumnOptions? left, NativeWeave.Data.ColumnOptions? right)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.ColumnOptions.{Clone}$`
 
@@ -296,7 +296,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public NativeWeave.Data.ColumnOptions NativeWeave.Data.ColumnOptions.<Clone>$()
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.ConcurrencyCheck`1.#ctor`
 
@@ -326,6 +326,24 @@ public NativeWeave.Data.ConcurrencyCheck<TEntity> NativeWeave.Data.ConcurrencyCh
 
 **exception:** The token is foreign, repeated, unbuilt or not marked for concurrency.
 
+## `M:NativeWeave.Data.ConcurrencyConflictException.#ctor(System.String,System.Int64,System.Int64)`
+
+```csharp
+public NativeWeave.Data.ConcurrencyConflictException.ConcurrencyConflictException(string message, long expectedRows, long actualRows)
+```
+
+**summary:** Creates an immutable expected/actual count diagnostic.
+
+**param message:** The non-null diagnostic message.
+
+**param expectedRows:** The nonnegative expected affected-row count.
+
+**param actualRows:** The nonnegative actual affected-row count.
+
+**exception:** is null.
+
+**exception:** A count is negative.
+
 ## `M:NativeWeave.Data.DatabaseCapabilityException.#ctor(System.String,System.String)`
 
 ```csharp
@@ -348,7 +366,7 @@ public NativeWeave.Data.DatabaseCapabilityException.DatabaseCapabilityException(
 public NativeWeave.Data.DatabaseErrorKind.DatabaseErrorKind()
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.DatabaseException.#ctor(System.String,NativeWeave.Data.DatabaseErrorKind,System.String,System.UInt64,System.Exception)`
 
@@ -398,7 +416,7 @@ public NativeWeave.Data.EntityKey<TEntity> NativeWeave.Data.EntityKey<TEntity>.A
 public NativeWeave.Data.EntityWriter<T>.EntityWriter(object @object, nint method)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.EntityWriter`1.BeginInvoke(NativeWeave.Data.RowWriter,`0,System.AsyncCallback,System.Object)`
 
@@ -406,7 +424,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public virtual System.IAsyncResult NativeWeave.Data.EntityWriter<T>.BeginInvoke(NativeWeave.Data.RowWriter row, T value, System.AsyncCallback callback, object @object)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.EntityWriter`1.EndInvoke(System.IAsyncResult)`
 
@@ -414,7 +432,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public virtual void NativeWeave.Data.EntityWriter<T>.EndInvoke(System.IAsyncResult result)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.EntityWriter`1.Invoke(NativeWeave.Data.RowWriter,`0)`
 
@@ -422,7 +440,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public virtual void NativeWeave.Data.EntityWriter<T>.Invoke(NativeWeave.Data.RowWriter row, T value)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.Projection`1.Create(System.ReadOnlySpan{NativeWeave.Data.ResultField},NativeWeave.Data.RowMaterializer{`0})`
 
@@ -580,7 +598,7 @@ public static NativeWeave.Data.Relation<TParent, TChild> NativeWeave.Data.Relati
 public NativeWeave.Data.ResultColumn<T>.ResultColumn()
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.ResultField.Create``1(System.String,NativeWeave.Data.ValueCodec{``0})`
 
@@ -608,7 +626,7 @@ public static NativeWeave.Data.ResultField NativeWeave.Data.ResultField.Create<T
 public NativeWeave.Data.RowMaterializer<T>.RowMaterializer(object @object, nint method)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.RowMaterializer`1.BeginInvoke(NativeWeave.Data.RowReader,System.AsyncCallback,System.Object)`
 
@@ -616,7 +634,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public virtual System.IAsyncResult NativeWeave.Data.RowMaterializer<T>.BeginInvoke(NativeWeave.Data.RowReader row, System.AsyncCallback callback, object @object)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.RowMaterializer`1.EndInvoke(System.IAsyncResult)`
 
@@ -624,7 +642,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public virtual T NativeWeave.Data.RowMaterializer<T>.EndInvoke(System.IAsyncResult result)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.RowMaterializer`1.Invoke(NativeWeave.Data.RowReader)`
 
@@ -632,7 +650,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public virtual T NativeWeave.Data.RowMaterializer<T>.Invoke(NativeWeave.Data.RowReader row)
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.RowReader.#ctor`
 
@@ -640,7 +658,7 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public NativeWeave.Data.RowReader.RowReader()
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.RowReader.Get``1(NativeWeave.Data.ResultColumn{``0})`
 
@@ -736,7 +754,7 @@ public T NativeWeave.Data.RowReader.Read<T>(int ordinal, NativeWeave.Data.ValueC
 public NativeWeave.Data.RowWriter.RowWriter()
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.RowWriter.Set``2(NativeWeave.Data.Column{``0,``1},``1)`
 
@@ -812,7 +830,7 @@ public static NativeWeave.Data.SqlCommand NativeWeave.Data.SqlCommand.Parameteri
 public NativeWeave.Data.SqlCommandKind.SqlCommandKind()
 ```
 
-Compiler-generated record/delegate member; inherits the documented type semantics.
+Compiler-generated member; inherits the documented type semantics.
 
 ## `M:NativeWeave.Data.SqlParameters.#ctor`
 
@@ -943,6 +961,58 @@ public bool NativeWeave.Data.Table<TEntity>.TryGetColumn<T>(string name, NativeW
 **exception:** is invalid.
 
 **exception:** A required argument is null.
+
+## `M:NativeWeave.Data.WeaveColumnAttribute.#ctor(System.String)`
+
+```csharp
+public NativeWeave.Data.WeaveColumnAttribute.WeaveColumnAttribute(string name)
+```
+
+**summary:** Declares the exact store column name.
+
+**param name:** A nonempty store identifier.
+
+**exception:** The name is empty or whitespace.
+
+**inheritdoc:**
+
+## `M:NativeWeave.Data.WeaveIgnoreAttribute.#ctor`
+
+```csharp
+public NativeWeave.Data.WeaveIgnoreAttribute.WeaveIgnoreAttribute()
+```
+
+Compiler-generated member; inherits the documented type semantics.
+
+## `M:NativeWeave.Data.WeaveKeyAttribute.#ctor`
+
+```csharp
+public NativeWeave.Data.WeaveKeyAttribute.WeaveKeyAttribute()
+```
+
+Compiler-generated member; inherits the documented type semantics.
+
+## `M:NativeWeave.Data.WeaveTableAttribute.#ctor(System.String)`
+
+```csharp
+public NativeWeave.Data.WeaveTableAttribute.WeaveTableAttribute(string name)
+```
+
+**summary:** Declares the exact store table name.
+
+**param name:** A nonempty table identifier; casing is preserved.
+
+**exception:** The name is empty or whitespace.
+
+**inheritdoc:**
+
+## `M:NativeWeave.Data.WeaveVersionAttribute.#ctor`
+
+```csharp
+public NativeWeave.Data.WeaveVersionAttribute.WeaveVersionAttribute()
+```
+
+Compiler-generated member; inherits the documented type semantics.
 
 ## `P:NativeWeave.Data.Codecs.Boolean`
 
@@ -1120,6 +1190,22 @@ public string NativeWeave.Data.Column<TEntity, T>.Name { get; }
 
 **summary:** Gets the exact store name, preserving case and Unicode.
 
+## `P:NativeWeave.Data.ConcurrencyConflictException.ActualRows`
+
+```csharp
+public long NativeWeave.Data.ConcurrencyConflictException.ActualRows { get; }
+```
+
+**summary:** Gets the actual affected-row count.
+
+## `P:NativeWeave.Data.ConcurrencyConflictException.ExpectedRows`
+
+```csharp
+public long NativeWeave.Data.ConcurrencyConflictException.ExpectedRows { get; }
+```
+
+**summary:** Gets the expected affected-row count.
+
 ## `P:NativeWeave.Data.DatabaseCapabilityException.Capability`
 
 ```csharp
@@ -1268,6 +1354,36 @@ public string NativeWeave.Data.ValueCodec<T>.Name { get; }
 
 **summary:** Gets the descriptive scalar codec name.
 
+## `P:NativeWeave.Data.WeaveColumnAttribute.Generated`
+
+```csharp
+public bool NativeWeave.Data.WeaveColumnAttribute.Generated { get; init; }
+```
+
+**summary:** Gets or initializes whether the database supplies the value on insertion.
+
+**inheritdoc:**
+
+## `P:NativeWeave.Data.WeaveTableAttribute.DescriptorName`
+
+```csharp
+public string? NativeWeave.Data.WeaveTableAttribute.DescriptorName { get; init; }
+```
+
+**summary:** Gets or initializes the generated static descriptor class name; default is EntityNameMapping.
+
+**inheritdoc:**
+
+## `P:NativeWeave.Data.WeaveTableAttribute.Schema`
+
+```csharp
+public string? NativeWeave.Data.WeaveTableAttribute.Schema { get; init; }
+```
+
+**summary:** Gets or initializes the optional exact schema name.
+
+**inheritdoc:**
+
 ## `T:NativeWeave.Data.Changes`1`
 
 ```csharp
@@ -1326,6 +1442,16 @@ public sealed class NativeWeave.Data.ConcurrencyCheck<TEntity> where TEntity : c
 
 **remarks:** Values are copied immediately. There is no identity map, implicit version increment or managed compare-and-swap.
 
+## `T:NativeWeave.Data.ConcurrencyConflictException`
+
+```csharp
+public sealed class NativeWeave.Data.ConcurrencyConflictException : NativeWeave.Data.DatabaseException
+```
+
+**summary:** A native optimistic write did not match its exact expected affected-row count.
+
+**remarks:** The original key and expected token predicate ran once in the database. This exception never authorizes a write replay.
+
 ## `T:NativeWeave.Data.DatabaseCapabilityException`
 
 ```csharp
@@ -1333,6 +1459,8 @@ public sealed class NativeWeave.Data.DatabaseCapabilityException : NativeWeave.D
 ```
 
 **summary:** Identifies a required capability missing from an engine or provider profile.
+
+**remarks:** The owned exception retains validated managed identity strings and no native handle. Constructing or reading it performs no provider call; capability admission rejects before business dispatch.
 
 ## `T:NativeWeave.Data.DatabaseErrorKind`
 
@@ -1377,6 +1505,8 @@ public delegate void NativeWeave.Data.EntityWriter<T>(NativeWeave.Data.RowWriter
 **param row:** A stack-only writer valid only for this snapshot.
 
 **param value:** The application entity.
+
+**remarks:** The callback runs synchronously during a finite input snapshot. Typed writes copy encoded values into owned buffers before native dispatch; the stack-only writer must not be retained.
 
 ## `T:NativeWeave.Data.Projection`1`
 
@@ -1424,6 +1554,8 @@ public sealed class NativeWeave.Data.ResultField
 
 **summary:** An immutable exact result alias, logical codec configuration and SQL nullability.
 
+**remarks:** Creating a field allocates one managed metadata object with no native resource. It can be retained in a static projection; source-specific codec binding occurs separately at registration.
+
 ## `T:NativeWeave.Data.RowMaterializer`1`
 
 ```csharp
@@ -1437,6 +1569,8 @@ public delegate T NativeWeave.Data.RowMaterializer<T>(NativeWeave.Data.RowReader
 **param row:** A borrowed stack-only reader valid only for the call.
 
 **returns:** The owned result; no row borrow may escape.
+
+**remarks:** The callback runs synchronously while its batch lease is live. Decoding and the application constructor create owned CLR values; borrowed reader state must not escape or cross an await.
 
 ## `T:NativeWeave.Data.RowReader`
 
@@ -1521,4 +1655,59 @@ public sealed class NativeWeave.Data.ValueCodec<T>
 **typeparam T:** The statically known CLR value type.
 
 **remarks:** Instances are immutable and shareable. IDs are logical metadata, not source-owned native handles. Nullable wrappers preserve the logical ID. Configured decimal identities include precision and scale. No native runtime is loaded; provider conversions and capability enforcement belong to B07.
+
+## `T:NativeWeave.Data.WeaveColumnAttribute`
+
+```csharp
+[System.AttributeUsageAttribute(System.AttributeTargets.Property, Inherited = false)]
+public sealed class NativeWeave.Data.WeaveColumnAttribute : System.Attribute
+```
+
+**summary:** Overrides a property's exact store name and generated-value policy.
+
+**remarks:** Without this attribute the CLR property symbol name is used unchanged. The generated column member keeps its CLR spelling.
+
+## `T:NativeWeave.Data.WeaveIgnoreAttribute`
+
+```csharp
+[System.AttributeUsageAttribute(System.AttributeTargets.Property, Inherited = false)]
+public sealed class NativeWeave.Data.WeaveIgnoreAttribute : System.Attribute
+```
+
+**summary:** Excludes a property from generated metadata and row serialization.
+
+**remarks:** Combining Ignore with another mapping annotation is inconsistent and rejected. Required constructor inputs still need a supported static mapping.
+
+## `T:NativeWeave.Data.WeaveKeyAttribute`
+
+```csharp
+[System.AttributeUsageAttribute(System.AttributeTargets.Property, Inherited = false)]
+public sealed class NativeWeave.Data.WeaveKeyAttribute : System.Attribute
+```
+
+**summary:** Marks a non-null primary-key property in deterministic projection order.
+
+**remarks:** Nullable keys are rejected at compilation and again by the static descriptor builder; there is no inferred key convention.
+
+## `T:NativeWeave.Data.WeaveTableAttribute`
+
+```csharp
+[System.AttributeUsageAttribute(System.AttributeTargets.Class, Inherited = false)]
+public sealed class NativeWeave.Data.WeaveTableAttribute : System.Attribute
+```
+
+**summary:** Opts a model into deterministic, static table and DTO mapping generation.
+
+**remarks:** The generator reads source symbols and emits the same TableBuilder calls as manual metadata. It never opens a database, loads a native module, runs Cargo or discovers runtime model types.
+
+## `T:NativeWeave.Data.WeaveVersionAttribute`
+
+```csharp
+[System.AttributeUsageAttribute(System.AttributeTargets.Property, Inherited = false)]
+public sealed class NativeWeave.Data.WeaveVersionAttribute : System.Attribute
+```
+
+**summary:** Marks an explicit optimistic-concurrency token.
+
+**remarks:** Generated metadata sets IsConcurrencyToken. The application supplies expected and changed values; no automatic version increment occurs.
 

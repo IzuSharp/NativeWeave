@@ -950,7 +950,11 @@ fn explicit_zero_timeout_is_retained_for_expiration_before_dispatch() {
     for profile in [Profile::Sqlite, Profile::PostgreSql] {
         let c = Context::new(profile);
         let mut q = c.query();
-        q.clause(22, &control(6, vec![field(1, 3, 0u64.to_le_bytes().to_vec())])).unwrap();
+        q.clause(
+            22,
+            &control(6, vec![field(1, 3, 0u64.to_le_bytes().to_vec())]),
+        )
+        .unwrap();
         c.select(&mut q);
         assert_eq!(q.seal(0).unwrap().timeout_ns, 0);
     }

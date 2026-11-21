@@ -1,18 +1,8 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/Server.Application/NativeWeave.Server.csproj" />
-    <Project Path="src/Server.Application/Hosting/NativeWeave.Server.Hosting.csproj" />
-    <Project Path="src/Server.Application/Generator/NativeWeave.Server.Generator.csproj" />
-    <Project Path="src/Protocols.Grpc/NativeWeave.Server.Grpc.csproj" />
-    <Project Path="src/Protocols.Mcp/NativeWeave.Server.Mcp.csproj" />
-    <Project Path="src/Protocols.Mcp/Generator/NativeWeave.Server.Mcp.Generator.csproj" />
     <Project Path="src/Data.NativeHost/NativeWeave.Database.csproj" />
     <Project Path="src/Data.NativeHost/DependencyInjection/NativeWeave.Database.DependencyInjection.csproj" />
     <Project Path="src/Query.Generator/NativeWeave.Query.Generator.csproj" />
-    <Project Path="src/Engines.SyncProof/NativeWeave.Engines.SyncProof.csproj" />
-    <Project Path="src/Engines.AsyncProof/NativeWeave.Engines.AsyncProof.csproj" />
-    <Project Path="src/Verification.ExtensionProof/NativeWeave.Verification.ExtensionProof.csproj" />
-    <Project Path="src/NativeWeave.HelloWorld/NativeWeave.HelloWorld.csproj" />
     <Project Path="src/Interop.Abi/Interop.Abi.csproj" />
     <Project Path="src/Data.Abstractions/NativeWeave.Data.csproj" />
     <Project Path="src/NativeWeave.Core/NativeWeave.Core.csproj" />
@@ -21,24 +11,13 @@
     <Project Path="src/Data.Postgres/NativeWeave.Database.PostgreSql.csproj" />
     <Project Path="src/Data.Sqlite/NativeWeave.Database.Sqlite.csproj" />
     <Project Path="src/Data.Streaming/NativeWeave.Data.Streaming.csproj" />
-    <Project Path="src/Generators.Model/NativeWeave.Generators.Model.csproj" />
     <Project Path="src/Query.Binding/NativeWeave.Query.Binding.csproj" />
-    <Project Path="src/Generators.Rust/NativeWeave.Generators.Rust.csproj" />
-    <Project Path="src/Generators.CSharp/NativeWeave.Generators.CSharp.csproj" />
-    <Project Path="src/Generators.CSharp/Metadata/NativeWeave.Generators.CSharp.Metadata.csproj" />
-    <Project Path="src/Analyzers/NativeWeave.Analyzers.csproj" />
   </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/api/interop-callbacks/Interop.Callbacks.Sample.csproj" />
     <Project Path="samples/api/interop-async/Interop.Async.Sample.csproj" />
-    <Project Path="samples/api/engines-syncproof/Engines.SyncProof.Sample.csproj" />
-    <Project Path="samples/api/engines-asyncproof/Engines.AsyncProof.Sample.csproj" />
-    <Project Path="samples/api/verification-extensionproof/ExtensionProof.Sample.csproj" />
     <Project Path="samples/api/interop-execution/Interop.Execution.Sample.csproj" />
-    <Project Path="samples/HelloWorld/HelloWorld.csproj" />
     <Project Path="samples/api/interop-abi/Interop.Abi.Sample.csproj" />
-    <Project Path="samples/api/benchmarks-harness/Managed/Managed.csproj" />
-    <Project Path="samples/api/benchmarks-harness/Native/Native.csproj" />
     <Project Path="samples/api/data-abstractions/DataAbstractions.csproj" />
     <Project Path="samples/api/interop-negotiation/Interop.Negotiation.Sample.csproj" />
     <Project Path="samples/api/interop-errors/Interop.Errors.Sample.csproj" />
@@ -47,23 +26,12 @@
     <Project Path="samples/api/data-postgres/PostgresExample.csproj" />
     <Project Path="samples/api/data-sqlite/Data.Sqlite.Sample.csproj" />
     <Project Path="samples/api/data-streaming/DataStreaming.csproj" />
-    <Project Path="samples/api/generators-model/Generators.Model.Sample.csproj" />
     <Project Path="samples/api/query-binding/QueryBindingSample.csproj" />
     <Project Path="samples/api/interop-lifetime/Interop.Lifetime.Sample.csproj" />
     <Project Path="samples/api/interop-memory/Interop.Memory.Sample.csproj" />
-    <Project Path="samples/api/generators-rust/Generators.Rust.Sample.csproj" />
-    <Project Path="samples/api/generators-csharp/Generators.CSharp.Sample.csproj" />
-    <Project Path="samples/api/analyzers/AnalyzersSample.csproj" />
-    <Project Path="samples/api/build-integration/Build.Integration.Sample.csproj" />
     <Project Path="samples/api/verification-compatibility/CompatibilitySample.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Server.Application/Server.Application.Tests.csproj" />
-    <Project Path="tests/Server.Streaming/Server.Streaming.Tests.csproj" />
-    <Project Path="tests/Server.Native/Server.Native.Tests.csproj" />
-    <Project Path="tests/Protocols.Grpc/NativeWeave.Server.Grpc.Tests.csproj" />
-    <Project Path="tests/Protocols.Mcp/Protocols.Mcp.Tests.csproj" />
-    <Project Path="tests/Server.Diagnostics/Server.Diagnostics.Tests.csproj" />
     <Project Path="tests/Data.NativeHost/NativeWeave.Data.NativeHost.Tests.csproj" />
     <Project Path="tests/Data.Migrations/NativeWeave.Data.Migrations.Tests.csproj" />
     <Project Path="tests/Query.Native/NativeWeave.Query.Native.Tests.csproj" />
@@ -73,12 +41,8 @@
     <Project Path="tests/Orm.Relations/NativeWeave.Orm.Relations.Tests.csproj" />
     <Project Path="tests/Interop.Callbacks/Interop.Callbacks.Tests.csproj" />
     <Project Path="tests/Interop.Async/Interop.Async.Tests.csproj" />
-    <Project Path="tests/Engines.SyncProof/NativeWeave.Engines.SyncProof.Tests.csproj" />
-    <Project Path="tests/Engines.AsyncProof/NativeWeave.Engines.AsyncProof.Tests.csproj" />
-    <Project Path="tests/Verification.ExtensionProof/NativeWeave.Verification.ExtensionProof.Tests.csproj" />
     <Project Path="tests/Interop.Execution/Interop.Execution.Tests.csproj" />
     <Project Path="tests/Interop.Execution/ApiCheck/ApiCheck.csproj" />
-    <Project Path="tests/NativeWeave.HelloWorld.Tests/NativeWeave.HelloWorld.Tests.csproj" />
     <Project Path="tests/Interop.Abi/Interop.Abi.Tests.csproj" />
     <Project Path="tests/Data.Abstractions/NativeWeave.Data.Tests.csproj" />
     <Project Path="tests/Interop.Negotiation/Interop.Negotiation.Tests.csproj" />
@@ -88,19 +52,13 @@
     <Project Path="tests/Data.Postgres/NativeWeave.Database.PostgreSql.Tests.csproj" />
     <Project Path="tests/Data.Sqlite/NativeWeave.Data.Sqlite.Tests.csproj" />
     <Project Path="tests/Data.Streaming/NativeWeave.Data.Streaming.Tests.csproj" />
-    <Project Path="tests/Generators.Model/NativeWeave.Generators.Model.Tests.csproj" />
     <Project Path="tests/Query.Binding/NativeWeave.Query.Binding.Tests.csproj" />
     <Project Path="tests/Interop.Errors/InvalidUco/InvalidUco.csproj" />
     <Project Path="tests/Interop.Lifetime/Interop.Lifetime.Tests.csproj" />
     <Project Path="tests/Interop.Memory/Interop.Memory.Tests.csproj" />
-    <Project Path="tests/Generators.Rust/NativeWeave.Generators.Rust.Tests.csproj" />
-    <Project Path="tests/Generators.CSharp/NativeWeave.Generators.CSharp.Tests.csproj" />
-    <Project Path="tests/Analyzers/NativeWeave.Analyzers.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
-    <Project Path="tools/ApiDocs/ApiDocs.csproj" />
     <Project Path="tests/Data.Abstractions/ApiCheck/ApiCheck.csproj" />
-    <Project Path="tests/Benchmarks.Harness/AssemblyInventory/AssemblyInventory.csproj" />
   </Folder>
   <Folder Name="/tools/A02/">
     <Project Path="tests/Interop.Negotiation/ApiCheck/ApiCheck.csproj" />
@@ -115,7 +73,6 @@
     <Project Path="tests/Interop.Async/ApiCheck/ApiCheck.csproj" />
   </Folder>
   <Folder Name="/tools/A09/">
-    <Project Path="tests/Generators.Model/ApiCheck/ApiCheck.csproj" />
   </Folder>
   <Folder Name="/tools/B05/">
     <Project Path="tests/Data.Transactions/ApiCheck/ApiCheck.csproj" />
@@ -150,38 +107,13 @@
     <Project Path="tests/Build.Integration/ApiFixture/ApiFixture.csproj" />
   </Folder>
   <Folder Name="/tests/A10/">
-    <Project Path="tests/Generators.CSharp/Consumer/Consumer.csproj" />
   </Folder>
   <Folder Name="/tests/A11/">
-    <Project Path="tests/Generators.Rust/Consumer/Consumer.csproj" />
-  </Folder>
-  <Folder Name="/tools/B15/">
-    <Project Path="tests/Server.Application/ApiCheck/ApiCheck.csproj" />
-  </Folder>
-  <Folder Name="/tools/B16/">
-    <Project Path="tests/Server.Streaming/ApiCheck/ApiCheck.csproj" />
-  </Folder>
-  <Folder Name="/tools/B18/">
-    <Project Path="tests/Protocols.Grpc/ApiCheck/ApiCheck.csproj" />
-  </Folder>
-  <Folder Name="/tools/B19/">
-    <Project Path="tests/Protocols.Mcp/ApiCheck/ApiCheck.csproj" />
-  </Folder>
-  <Folder Name="/tools/B20/">
-    <Project Path="tests/Server.Diagnostics/ApiCheck/ApiCheck.csproj" />
-  </Folder>
-  <Folder Name="/benchmarks/B17/">
-    <Project Path="tests/Server.Native/Benchmarks/Benchmarks.csproj" />
   </Folder>
   <Folder Name="/tools/B10/">
     <Project Path="tests/Query.Generator/ApiCheck/ApiCheck.csproj" />
   </Folder>
   <Folder Name="/tools/B13/">
     <Project Path="tests/Query.Fluent/ApiCheck/ApiCheck.csproj" />
-  </Folder>
-  <Folder Name="/tests/B19/">
-    <Project Path="tests/Protocols.Mcp/Generator/Driver/Driver.csproj" />
-    <Project Path="tests/Protocols.Mcp/Generator/External/External.csproj" />
-    <Project Path="tests/Protocols.Mcp/Generator/Witness/Witness.csproj" />
   </Folder>
 </Solution>

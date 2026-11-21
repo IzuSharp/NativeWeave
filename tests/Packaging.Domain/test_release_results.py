@@ -12,10 +12,47 @@ import subprocess
 import tempfile
 import unittest
 from unittest.mock import patch
+import zipfile
 
 SPEC = importlib.util.spec_from_file_location("b24_release_cases", Path(__file__).with_name("release_cases.py"))
 CASES = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(CASES)
+
+from model import validate_database_payload
+
+
+class DatabasePayloadTests(unittest.TestCase):
+    """Nuspec/file-layout fixtures exercise scope gates, not product binaries."""
+
+    def package(self, directory, *, dependency="", extra=None):
+        path = directory / "fixture.nupkg"
+        metadata = ('<package><metadata><id>NativeWeave.Data</id><version>1.0.0-test</version>'
+                    + dependency + '</metadata></package>')
+        with zipfile.ZipFile(path, "w") as archive:
+            archive.writestr("NativeWeave.Data.nuspec", metadata)
+            archive.writestr("lib/net11.0/NativeWeave.Data.dll", b"unexecuted scope fixture")
+            if extra:
+                archive.writestr(extra, b"unexecuted unwanted asset")
+        return path
+
+    def test_external_protocol_dependency_is_rejected(self):
+        expected = {"id": "NativeWeave.Data", "dependencies": {}}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            valid = self.package(root)
+            self.assertEqual(validate_database_payload(valid, expected)["dependencies"], {})
+            invalid = self.package(root, dependency='<dependencies><dependency id="Grpc.Core" version="[1.0.0]" /></dependencies>')
+            with self.assertRaisesRegex(ValueError, "Retired non-database package"):
+                validate_database_payload(invalid, expected)
+
+    def test_undeclared_native_and_managed_runtime_files_are_rejected(self):
+        expected = {"id": "NativeWeave.Data", "dependencies": {}}
+        with tempfile.TemporaryDirectory() as temporary:
+            for name in ("runtimes/linux-x64/native/libnativeweave_server.so", "lib/net11.0/NativeWeave.Server.dll"):
+                with self.subTest(name=name):
+                    invalid = self.package(Path(temporary), extra=name)
+                    with self.assertRaisesRegex(ValueError, "undeclared"):
+                        validate_database_payload(invalid, expected)
 
 
 class ReleaseResultTests(unittest.TestCase):
@@ -35,13 +72,18 @@ class ReleaseResultTests(unittest.TestCase):
             item = {"id": "NativeWeave.Fixture.Native", "version": "1.0.0-" + closure, "native": True}
             # Uninterpreted fixture bytes, not a built or valid NuGet package.
             (directory / f"{item['id']}.{item['version']}.nupkg").write_bytes(closure.encode())
-            record = {"source_commit": self.manifest["sourceCommit"], "rid": "linux-x64", "packages": [item]}
+            record = {"source_commit": self.manifest["sourceCommit"], "rid": "linux-x64", "packages": [item],
+                      "builder_identity": "nativeweave-local-reviewed-staging"}
             self.records[closure] = record
             CASES.save(directory / "record.json", record)
             self.manifest[closure] = {"releaseRecord": closure + "/record.json", "feed": closure}
         CASES.save(self.manifest_path, self.manifest)
 
     def publish_stub(self, record, feed, destination, journal, catalog, verify, consume, fault=None):
+        if record["builder_identity"] == "unknown-builder":
+            raise CASES.release.compat.Rejected("NWPKG015 fixture unknown builder")
+        if any(item.get("upload_archive_sha256") == "0" * 64 for item in record["packages"]):
+            raise CASES.release.compat.Rejected("NWPKG004 fixture wrong provenance subject")
         destination.mkdir(parents=True, exist_ok=True)
         self.original_atomic(journal, {"status": "partial-unadvertised"})
         packages = {}
@@ -67,6 +109,8 @@ class ReleaseResultTests(unittest.TestCase):
             raise CASES.release.compat.Rejected("NWPKG011 fixture missing package")
         if receipt["source_commit"] != record["source_commit"]:
             raise CASES.release.compat.Rejected("NWPKG001 fixture source mismatch")
+        if receipt["rid"] != record["rid"]:
+            raise CASES.release.compat.Rejected("NWPKG001 fixture RID mismatch")
         return {"deployment": "fixture-fresh-process", "packages": receipt["packages"]}
 
     def run_main(self, *, consume_error=None, index_error=False):
@@ -82,6 +126,8 @@ class ReleaseResultTests(unittest.TestCase):
             directory.mkdir()
             record = self.records[closure]
             receipt = {"passed": True, "rid": record["rid"], "source_commit": record["source_commit"],
+                "consumer_environment": arguments[arguments.index("--consumer-environment") + 1],
+                "pristine_machine": arguments[arguments.index("--consumer-environment") + 1] == "pristine",
                 "packages": {item["id"]: CASES.sha(destination / f"{item['id']}.{item['version']}.nupkg")
                              for item in record["packages"]}}
             CASES.save(directory / "receipt.json", receipt)
@@ -89,12 +135,12 @@ class ReleaseResultTests(unittest.TestCase):
 
         def observe_atomic(path, value):
             if path == evidence / "evidence-index.json":
-                # Even eleven completed cases cannot pass before index creation.
+                # Even all completed cases cannot pass before index creation.
                 for result in (self.output / "result.json", evidence / "result.json"):
                     running = json.loads(result.read_text())
                     self.assertFalse(running["passed"])
                     self.assertEqual(running["status"], "running")
-                    self.assertEqual(len(running["cases"]), 11)
+                    self.assertEqual(len(running["cases"]), len(CASES.EXPECTED_CASES))
                 if index_error:
                     raise OSError("injected evidence index failure")
             if path in (self.output / "result.json", evidence / "result.json"):
@@ -103,7 +149,7 @@ class ReleaseResultTests(unittest.TestCase):
                 if snapshot["passed"]:
                     self.assertEqual(snapshot["status"], "completed")
                     self.assertEqual({item["name"] for item in snapshot["cases"]}, CASES.EXPECTED_CASES)
-                    self.assertEqual(len(snapshot["cases"]), 11)
+                    self.assertEqual(len(snapshot["cases"]), len(CASES.EXPECTED_CASES))
                     index = json.loads((evidence / "evidence-index.json").read_text())
                     for name in ("previous-journal.json", "previous-catalog.json", "existing-journal.json",
                                  "existing-catalog.json", "candidate-journal.json", "candidate-catalog.json", "conflict-journal.json"):
@@ -145,7 +191,7 @@ class ReleaseResultTests(unittest.TestCase):
     def test_index_failure_after_all_cases_preserves_incomplete_result(self):
         with self.assertRaisesRegex(OSError, "injected evidence index failure"):
             self.run_main(index_error=True)
-        self.assert_incomplete(11)
+        self.assert_incomplete(len(CASES.EXPECTED_CASES))
 
     def test_only_terminal_success_is_indexed_and_committed(self):
         self.run_main()

@@ -10,11 +10,11 @@ Console.WriteLine($"{descriptor.EngineId}: {string.Join(", ", descriptor.Support
 // Advanced: optional exact-asset preflight. Production defaults use the package's
 // output-location record, emitted from the actual maintainer asset at build.
 EngineInfo ordinary = descriptor.Inspect();
-Console.WriteLine($"Ordinary component preflight: {ordinary.EngineId}");
-if (Environment.GetEnvironmentVariable("NW_PG_COMPONENT_ASSET") is string path)
+Console.WriteLine($"Ordinary Database Host preflight: {ordinary.EngineId}");
+if (Environment.GetEnvironmentVariable("NW_PG_HOST_ASSET") is string path)
 {
-    EngineInfo info = descriptor.Inspect(new() { NativeAssetPath = path, RequiredCapabilities = new[] { new EngineCapability("postgres.component.v1") } });
-    Console.WriteLine($"Validated {info.AbiVersion.Major}.{info.AbiVersion.Minor}: {info.Supports(new("postgres.component.v1"))}");
+    EngineInfo info = descriptor.Inspect(new() { NativeAssetPath = path, RequiredCapabilities = new[] { new EngineCapability("db.query.v1") } });
+    Console.WriteLine($"Validated {info.AbiVersion.Major}.{info.AbiVersion.Minor}: {info.Supports(new("db.query.v1"))}");
 }
-// DataSource/Create/UsePostgreSql composition belongs to B04; see the guide's exact
-// signature map. This example does not substitute a mock datasource or provider.
+// Create and UsePostgreSql use this complete Host. This example performs only
+// stateless preflight; real SQL execution is verified by the database consumers.

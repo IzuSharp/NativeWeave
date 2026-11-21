@@ -1,55 +1,46 @@
-# Getting started
+# Use the database candidate from ordinary C#
 
-## Maintainer source development
+The current candidate targets Linux x64 and .NET11, with JIT and Native AOT. Choose `NativeWeave.Database.Sqlite`, `NativeWeave.Database.PostgreSql`, or both. No NativeWeave server or protocol package is required.
 
-Install the versions in global.json and rust-toolchain.toml, Python 3.9+ and native linker prerequisites. macOS arm64 uses Xcode Command Line Tools. Linux CI uses Ubuntu 24.04 x64 with `clang` and `zlib1g-dev`.
+## Restore outside the source tree
 
-```sh
-python3 eng/build.py native
-dotnet run --project samples/HelloWorld
-python3 eng/build.py verify
-```
+A maintainer first runs the verified candidate workflow described in the root README. It creates the exact local feed at `artifacts/db-scope/prepared/candidate/feed`; the manifest records facade/native and shared package versions. With the default version base, the provider version is `0.1.0-db-scope.1.2` and shared dependencies are pinned by the package.
 
-The source sample uses ProjectReference and explicitly staged native output. `dotnet build/run` do not secretly invoke Cargo. Rebuild the native asset explicitly after Rust changes.
-
-## Independent NuGet consumer
-
-After `python3 eng/build.py verify`, copy `samples/PackageConsumer` to a directory outside the repository. In that directory create `NuGet.Config`, replacing `/absolute/path/to/artifacts/packages` with the actual local feed:
+Create an ordinary executable project outside the NativeWeave checkout:
 
 ```xml
-<configuration>
-  <packageSources>
-    <clear />
-    <add key="candidate" value="/absolute/path/to/artifacts/packages" />
-    <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-  </packageSources>
-  <packageSourceMapping>
-    <packageSource key="candidate"><package pattern="NativeWeave.*" /></packageSource>
-    <packageSource key="nuget.org"><package pattern="*" /></packageSource>
-  </packageSourceMapping>
-</configuration>
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="NativeWeave.Database.Sqlite" Version="[0.1.0-db-scope.1.2]" />
+  </ItemGroup>
+</Project>
 ```
 
-Use the package version you built (default `0.1.0-preview.1`):
+Point a local NuGet.Config at the candidate feed and nuget.org; map `NativeWeave.*` to that exact feed. Add the PostgreSQL provider PackageReference when needed. Use the candidate manifest's version when the producer selected a different version base.
+
+## Typed queries and DTOs
+
+The executable [database package sample](../samples/api/packaging-domain/README.md) contains static table/model declarations, typed CRUD, a strongly typed Fluent projection into a DTO and actual returned-data checks for each provider. Its added-model template shows an ordinary C# entity/DTO edit without rebuilding native code.
+
+`DataSource` owns the provider pool; open and dispose a `DataSession` for business work. Typed queries bind parameters and project through static mapping. Dispose sources, sessions, transactions and stream enumerators according to their API contracts. The component guides document provider-specific capabilities, transaction outcomes and cancellation semantics.
+
+A business method can be called directly by a console app, a standard ASP.NET Core endpoint or a standard C# gRPC method. Install and configure the chosen host independently.
+
+## Build and publish
 
 ```sh
-dotnet build
-dotnet run
-# Hello, World! From Rust.
-dotnet run -- "世界 🦀"
-dotnet publish -c Release -r osx-arm64 -p:PublishAot=true -o publish
-./publish/PackageConsumer
+dotnet restore
+dotnet run -c Release
+dotnet publish -c Release -r linux-x64 -p:PublishAot=true -o publish
+./publish/YourApplication
 ```
 
-Use `-r linux-x64` on Linux with a Linux-built candidate. Each candidate contains only the RID actually built and verified; an osx-arm64 local package and a linux-x64 CI package are separate local candidates and must not both be published as the same immutable NuGet version. Initial public release artifacts are Linux x64 only. No Rust toolchain is needed in the consumer. AOT needs the C linker and system development libraries.
+Native AOT needs the platform C linker prerequisites. Applications use the restored precompiled provider library and do not install or invoke Rust. The strict package targets validate the exact restored graph and selected native bytes. Do not suppress a closure error or substitute a native binary.
 
-## Troubleshooting
-
-- **Missing local asset in a source build:** run `python3 eng/build.py native`.
-- **Package not found:** for a local build, configure the local feed, matching version and source mapping. For public Linux x64 previews, choose an available version on nuget.org and allow prerelease packages; see [release versions](releasing.md).
-- **DllNotFoundException / BadImageFormatException:** verify the package RID, architecture and output native asset. Do not copy a binary from another OS.
-- **ABI/version error:** reinstall the complete matching package. Do not swap its native library manually.
-- **AOT linker failure:** check Xcode Command Line Tools or Linux clang/zlib development prerequisites. A JIT run is not an AOT test.
-- **Invalid name:** pass valid UTF-16 that fits within 4096 UTF-8 bytes. Empty strings are allowed.
-
-See the [API reference](api-reference.md) for the complete public surface and [interop contract](interop.md) for the boundary and costs.
+The maintained consumer verifier runs SQLite-only, PostgreSQL-only and combined dependency graphs; it checks the actual mapped native modules and hashes as well as the package and publish directory. See [packaging](guides/packaging-domain.md) for reproducing those checks.

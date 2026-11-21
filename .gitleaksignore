@@ -1,0 +1,6 @@
+# DB-Scope-01: exact historical documentation false positive only.
+# This cursor-HMAC example decodes to the deterministic bytes(range(32)) fixture
+# used by tests/Reference.TaskService/run.py. It is not an external credential.
+# Current documentation generates a new private key instead. Keep all upstream
+# Gitleaks rules and the full-history scan; do not generalize this exception.
+26328245e69560192e23071a6bba24aa57a3b2fd:samples/api/reference-taskservice/README.md:generic-api-key:23

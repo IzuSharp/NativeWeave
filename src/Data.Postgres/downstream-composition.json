@@ -1,6 +1,6 @@
 {
   "owner": "B04",
-  "reason": "B02 packet DAG explicitly separates component acceptance from B04 datasource/runtime/session host composition; no fake DataSource or throwing factory is introduced.",
+  "reason": "Historical B02/B04 ownership slice, preserved with its original Design signatures. The integrated provider assembly already implements these factories and builder extensions through Data.NativeHost; public-api.expected.json now includes them in its exact compiled surface. Historical component execution remains distinct from full database host acceptance.",
   "symbols": [
     {
       "id": "M:NativeWeave.Database.PostgreSql.PostgreSqlDataSource.Create(System.String,System.Action{NativeWeave.Database.PostgreSql.PostgreSqlOptions})",

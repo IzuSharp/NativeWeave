@@ -1,9 +1,0 @@
-syntax = "proto3";
-package nativeweave.samples;
-option csharp_namespace = "NativeWeave.Grpc.Sample.Messages";
-
-message CounterRequest { int64 value = 1; }
-message CounterReply { int64 value = 1; }
-service CounterApi {
-  rpc Increment(CounterRequest) returns (CounterReply);
-}

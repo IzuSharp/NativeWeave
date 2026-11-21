@@ -254,7 +254,7 @@ internal static class Suite
         { using var q = Q(); Throws<DatabaseCapabilityException>(() => q.ForUpdate()); }
         else
         {
-            using (var withoutTransaction = Q()) await ThrowsAsync<DatabaseException>(() => withoutTransaction.ForUpdate().SelectAll().ToListAsync());
+            using (var withoutTransaction = Q()) await ThrowsAsync<InvalidOperationException>(() => withoutTransaction.ForUpdate().SelectAll().ToListAsync());
             await using var transaction = await session.BeginTransactionAsync();
             using var q = Q(); Check((await q.WhereEqual(Models.Id, 1L).ForUpdate(RowLockMode.Share, LockWait.NoWait).SelectAll().ToListAsync()).Count == 1, "PostgreSQL explicit transaction row lock");
             await transaction.RollbackAsync();

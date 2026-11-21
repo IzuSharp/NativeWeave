@@ -6,12 +6,7 @@ or run in an application. Run it from an isolated maintainer checkout with the
 repository's fixed Python/.NET/Rust toolchain. Its CLI is
 `src/Verification.Compatibility/compatibility.py`.
 
-This delivery covers Linux x64. The Windows row remains unexecuted. The old/new
-Core matrix uses the previously accepted A01/A02 product source and controlled
-native extension profiles; Core has no previously released public NuGet package
-in this evidence. Existing signed HelloWorld previews are used separately for
-real package identity, restore, fresh-process upgrade and rollback. They do not
-stand in for a released Database, ORM or Server compatibility matrix.
+This retained verifier covers Linux x64 Core ABI/API compatibility. Controlled native fixtures exercise old/new contracts and rejection paths. Current package identity, provenance, signature rejection and complete-closure rollback are tested against the actual database candidate by Packaging.Domain. Historical signed demo observations remain in the original Plan evidence and do not substitute for current database consumption.
 
 ## Run the checks
 

@@ -1,6 +1,6 @@
-# NativeWeave.Database.Sqlite component API reference
+# NativeWeave.Database.Sqlite API reference
 
-Generated from the compiled product assembly and its XML comments by `tests/Data.Sqlite/ApiCheck`. B03 options and component Engine; exact Create/UseSqlite composition remains B04 and is recorded separately. Actual SQLx execution is verified through the component fixture.
+Generated from the compiled product assembly and its XML comments by `tests/Data.Sqlite/ApiCheck`. Covers provider options, Engine preflight, and the integrated Create/UseSqlite data source factories. Exact declarations retain the pinned Design identity in `public-api.expected.json`; the historical B03/B04 ownership slice remains in `host-composition.expected.json`.
 
 ## `F:NativeWeave.Database.Sqlite.SqliteBeginMode.Deferred`
 
@@ -98,6 +98,46 @@ public NativeWeave.Database.Sqlite.SqliteBeginMode.SqliteBeginMode()
 
 Compiler-generated record/delegate member; inherits the documented type semantics.
 
+## `M:NativeWeave.Database.Sqlite.SqliteDataSource.Create(System.String,System.Action{NativeWeave.Database.Sqlite.SqliteOptions})`
+
+```csharp
+public static NativeWeave.Database.DataSource NativeWeave.Database.Sqlite.SqliteDataSource.Create(string path, System.Action<NativeWeave.Database.Sqlite.SqliteOptions>? configure = null)
+```
+
+**summary:** Creates one independently owned lazy native SQLite data source.
+
+**param path:** The nonempty database path; no connection is opened during construction.
+
+**param configure:** An optional synchronous options callback whose values are immediately snapshotted.
+
+**returns:** A data source whose sessions and source should be asynchronously disposed.
+
+**exception:** The path or options are invalid.
+
+**exception:** is null.
+
+**exception:** The exact packaged module cannot be negotiated.
+
+## `M:NativeWeave.Database.Sqlite.SqliteDataSourceBuilderExtensions.UseSqlite(NativeWeave.Database.DataSourceBuilder,System.String,System.Action{NativeWeave.Database.Sqlite.SqliteOptions})`
+
+```csharp
+public static NativeWeave.Database.DataSourceBuilder NativeWeave.Database.Sqlite.SqliteDataSourceBuilderExtensions.UseSqlite(this NativeWeave.Database.DataSourceBuilder builder, string path, System.Action<NativeWeave.Database.Sqlite.SqliteOptions>? configure = null)
+```
+
+**summary:** Snapshots SQLite configuration without loading a module or opening a database.
+
+**param builder:** The single-writer source builder.
+
+**param path:** The nonempty database path.
+
+**param configure:** Optional synchronous configuration; exceptions prevent builder mutation.
+
+**returns:** The supplied builder.
+
+**exception:** The builder or path is null.
+
+**exception:** A provider setting or path is invalid.
+
 ## `M:NativeWeave.Database.Sqlite.SqliteJournalMode.#ctor`
 
 ```csharp
@@ -136,9 +176,9 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public static NativeWeave.Interop.EngineDescriptor NativeWeave.Database.Sqlite.SqliteDataSource.Engine { get; }
 ```
 
-**summary:** Gets the immutable descriptor for the actual precompiled component asset.
+**summary:** Gets the immutable descriptor of the complete SQLite Database Host asset.
 
-**remarks:** Property access constructs cached metadata only. Inspect verifies the generated asset hash and canonical bootstrap, advertising only db.sqlite.profile.v1. This component asset is not a complete database host or an independently published package. The manifest states only RIDs actually present in this build.
+**remarks:** The canonical database bootstrap negotiates only capabilities implemented by this asset. Missing or mismatched assets fail inspection before runtime admission.
 
 ## `P:NativeWeave.Database.Sqlite.SqliteOptions.BeginMode`
 
@@ -204,9 +244,19 @@ public enum NativeWeave.Database.Sqlite.SqliteBeginMode : int
 public static class NativeWeave.Database.Sqlite.SqliteDataSource
 ```
 
-**summary:** Provides immutable metadata for the maintainer-built SQLite provider component.
+**summary:** Creates SQLite datasources backed by the maintainer-built Rust Database Host.
 
-**remarks:** This component declaration contributes Engine and the exact provider options. The Create factory and UseSqlite extension compose with B04's DataSource/DataSourceBuilder; their exact signatures and ownership mapping are recorded in the component guide. Engine inspection starts no SQLite connection or runtime.
+**remarks:** Descriptor access is pure metadata. Inspect verifies the packaged asset without creating a runtime or opening a connection; Create owns the configured runtime and datasource.
+
+## `T:NativeWeave.Database.Sqlite.SqliteDataSourceBuilderExtensions`
+
+```csharp
+public static class NativeWeave.Database.Sqlite.SqliteDataSourceBuilderExtensions
+```
+
+**summary:** Configures the explicitly selected independently packaged SQLite engine.
+
+**remarks:** The builder remains single-writer. Configuration snapshots managed values without I/O; Build negotiates the separately packaged native engine and creates the source owner.
 
 ## `T:NativeWeave.Database.Sqlite.SqliteJournalMode`
 

@@ -266,8 +266,12 @@ internal sealed class BlobStore : IDisposable
             using (var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256))
             {
                 var sink = new HashingSink(file, digest, Manifest.ContentLength);
-                // Native Server's CopyToAsync charges its 32KiB managed staging and native overlap.
-                await input.CopyToAsync(sink, 32_768, token).ConfigureAwait(false);
+                // Stream.CopyToAsync overrides may ignore the requested buffer size (for example MemoryStream).
+                // Preserve the fixture's existing 32KiB bound for every ordinary application Stream.
+                byte[] buffer = new byte[32_768];
+                int read;
+                while ((read = await input.ReadAsync(buffer, token).ConfigureAwait(false)) != 0)
+                    await sink.WriteAsync(buffer.AsMemory(0, read), token).ConfigureAwait(false);
                 if (sink.Count != Manifest.ContentLength) throw new ApplicationProblem(400, "attachment_length_mismatch");
                 await file.FlushAsync(token).ConfigureAwait(false); file.Flush(true);
                 hash = Convert.ToHexStringLower(digest.GetHashAndReset());

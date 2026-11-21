@@ -227,7 +227,7 @@ foreach (var key in expected.Keys.Intersect(actual.Keys))
 }
 var xml = XDocument.Load(Path.ChangeExtension(assemblyPath, ".xml"));
 var docs = xml.Descendants("member").ToDictionary(e => e.Attribute("name")!.Value, StringComparer.Ordinal);
-var output = new StringBuilder("# NativeWeave.Data API reference\n\nGenerated from the compiled product assembly and its XML comments by `tests/Data.Abstractions/ApiCheck`. B01 data descriptors and transport only; database provider execution belongs to downstream tasks.\n\n");
+var output = new StringBuilder("# NativeWeave.Data API reference\n\nGenerated from the compiled product assembly and its XML comments by `tests/Data.Abstractions/ApiCheck`. Covers data descriptors and transport, static model annotations, and shared ORM errors. Database provider execution remains in the database assemblies. Exact declarations retain the pinned Design identity in `public-api.expected.json`.\n\n");
 foreach (var entry in expected.OrderBy(e => e.Key, StringComparer.Ordinal))
 {
     if (!actual.TryGetValue(entry.Key, out var symbol)) continue;
@@ -240,9 +240,15 @@ foreach (var entry in expected.OrderBy(e => e.Key, StringComparer.Ordinal))
         if (symbol is IMethodSymbol { ReturnsVoid: false, MethodKind: not MethodKind.Constructor } && member.Element("returns") is null) failures.Add("Missing XML returns: " + entry.Key);
     }
     output.Append("## `").Append(entry.Key).Append("`\n\n```csharp\n").Append(Declaration(symbol)).Append("\n```\n\n");
-    if (implicitMember) output.Append("Compiler-generated record/delegate member; inherits the documented type semantics.\n\n");
+    if (implicitMember) output.Append("Compiler-generated member; inherits the documented type semantics.\n\n");
     else if (docs.TryGetValue(entry.Key, out var memberDoc))
-        foreach (var element in memberDoc.Elements()) output.Append("**").Append(element.Name.LocalName).Append(element.Attribute("name") is { } name ? " " + name.Value : "").Append(":** ").Append(string.Join(" ", element.Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))).Append("\n\n");
+        foreach (var element in memberDoc.Elements())
+        {
+            string content = string.Join(" ", element.Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+            output.Append("**").Append(element.Name.LocalName).Append(element.Attribute("name") is { } name ? " " + name.Value : "").Append(":**");
+            if (content.Length != 0) output.Append(' ').Append(content);
+            output.Append("\n\n");
+        }
 }
 if (failures.Count > 0) throw new InvalidOperationException(string.Join("\n", failures));
 var destination = Path.Combine(root, "src/Data.Abstractions/api-reference.md");

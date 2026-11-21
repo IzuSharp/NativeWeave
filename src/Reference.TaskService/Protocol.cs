@@ -6,7 +6,7 @@ using System.Text.Json.Serialization;
 
 namespace NativeWeave.Reference.TaskService;
 
-/// <summary>Application wire values; these internal types introduce no public framework API.</summary>
+/// <summary>Internal database application values; these types introduce no framework API or transport.</summary>
 internal sealed record CreateItem(string Title);
 internal sealed record ItemView(string ItemId, string Title, long CreatedAt, long Version);
 internal sealed record CreatedItem(long ResponseVersion, string OperationId, string ItemId, string Title, long CreatedAt, long Version);
@@ -14,7 +14,7 @@ internal sealed record AttachedItem(long ResponseVersion, string OperationId, st
 internal sealed record ItemPage(ItemView[] Items, string? NextCursor);
 internal sealed record Problem(string Code, string? OperationId = null, string? RecoveryUri = null, ulong? CorrelationId = null);
 internal sealed record AuthIdentity(string Tenant, string Principal, bool CanWrite);
-internal sealed record Replay(int Status, byte[] Bytes, string OperationId);
+internal sealed record Replay(int Status, byte[] Bytes, string OperationId, string? ProviderCode = null);
 internal sealed class ApplicationProblem(int status, string code) : Exception(code)
 {
     internal int Status { get; } = status;
@@ -27,11 +27,13 @@ internal sealed class ApplicationProblem(int status, string code) : Exception(co
 [JsonSerializable(typeof(CreateItem)), JsonSerializable(typeof(CreatedItem)), JsonSerializable(typeof(AttachedItem))]
 [JsonSerializable(typeof(ItemPage)), JsonSerializable(typeof(Problem)), JsonSerializable(typeof(ServiceConfiguration))]
 [JsonSerializable(typeof(UploadManifest)), JsonSerializable(typeof(RecoveryManifest)), JsonSerializable(typeof(MaintenanceReport))]
-[JsonSerializable(typeof(ShutdownReport)), JsonSerializable(typeof(MaintenanceProgress))]
+[JsonSerializable(typeof(FixtureReceipt)), JsonSerializable(typeof(MaintenanceProgress))]
 internal partial class AppJson : JsonSerializerContext { }
 
 internal sealed record MaintenanceReport(int DeletedOutbox, int DeletedOperations, int DeletedBlobs, int DeletedStaging);
-internal sealed record ShutdownReport(string ServerState, string DatabaseStatus, bool DatabaseResourcesReleased, string ConsumerStatus, bool ConsumerResourcesReleased);
+internal sealed record FixtureReply(int Status, string BytesHex, string OperationId, string? ErrorKind = null, string? ProviderCode = null);
+internal sealed record FixtureReceipt(string Case, bool DynamicCodeSupported, List<FixtureReply> Replies,
+    Dictionary<string, string> Checks, bool DatabaseResourcesReleased, bool ConsumerResourcesReleased);
 
 /// <summary>Fixed v1 byte framing, independent of JSON serialization, locale and Unicode normalization.</summary>
 internal static class Canonical

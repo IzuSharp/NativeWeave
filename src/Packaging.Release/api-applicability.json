@@ -1,14 +1,16 @@
 {
-  "task": "A16",
+  "task": "DB-Scope-01",
   "platform": "linux-x64",
-  "unexecuted_platforms": ["win-x64"],
+  "unexecuted_platforms": [
+    "win-x64"
+  ],
   "public_runtime_surface": [],
   "distribution": "Reusable buildTransitive target and its MSBuild host task embedded in each tested facade package; no new public package is published by this task.",
   "compiler_host_surface": "NativeWeave.Packaging.PackageClosure has ten compiled XML symbols, checked by tests/Packaging.Release/ApiCheck and documented in api-reference.md. The task assembly is absent from application runtime and Native AOT output.",
-  "existing_product_api": "The real conformance facade consumes A02's EnginePackage, EnginePackageManifest, NativeAssetDescriptor, EngineCapabilityDefinition, EngineDescriptor and EngineLoadOptions. Their accepted compiled signatures, XML and lifetime remain owned by Core; A16 adds no duplicate descriptor or loader.",
-  "domain_applicability": "The input index includes Database registration and Server consumers to define package boundaries. Their domain implementations are not supplied by this packaging task or represented by the local conformance facade.",
-  "consumer": "samples/api/packaging-release contains the actual independent package consumer templates, typed Entity/DTO/Handler examples, missing-capability case and compiled facade descriptor.",
-  "stable_source_comparison": "The new compiler-host seam follows the pinned SDK's MSBuild Task, Required and Output contracts. Its exact types, accessors, attributes, constructor and Execute signature are checked against the actual compiled assembly. Application API policy and source comparisons are reused from accepted A02/A10/A12.",
-  "resource_applicability": "The build task hashes files and emits bounded records. It creates no application domain owners, callbacks, leases, async operations or executors. The native conformance bootstrap uses the actual product ABI and Core module lifetime; complete Core callback/async AOT composition belongs to A14. Rollback starts a new process.",
+  "existing_product_api": "The real database facades use the existing Core package descriptors, manifests, native assets and module negotiation. This packaging task introduces no runtime descriptor or loader.",
+  "domain_applicability": "The exact PostgreSQL/SQLite candidate graph uses this MSBuild task and buildTransitive target. Historical A16 design-inputs remain an immutable provenance record; orphan proof products and generic generators are retired.",
+  "consumer": "samples/api/packaging-domain and tests/Packaging.Domain execute ordinary external PackageReference typed Fluent/DTO consumers in JIT and Native AOT.",
+  "stable_source_comparison": "The compiler-host seam follows the pinned SDK MSBuild Task, Required and Output contracts. Exact types, accessors, attributes, constructor, Execute signature and XML are checked against its compiled assembly.",
+  "resource_applicability": "The build task hashes selected package files and emits bounded records. It creates no runtime database owners, callbacks, leases or executors. Core lifecycle conformance remains covered by Packaging.Linux and database consumers; immutable rollback starts a fresh process.",
   "trust_boundary": "Local staged package integrity is explicitly unsigned and unauthenticated. Registry readback delegates to A22's real NuGet signature verifier with the accepted service, owner and certificate policy; archive hashes do not assert publisher authentication."
 }

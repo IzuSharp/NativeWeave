@@ -3,7 +3,7 @@
 
 The selected file descriptor must resolve to the disposable database, WAL or
 journal. Runtime logging, private configuration, stdout and unrelated files are
-never faulted. The controller arms the fault only after application READY. This
+never faulted. The controller arms the fault for one fixed database scenario. This
 is injected syscall failure, not an exhausted physical disk or a power-loss test.
 """
 from __future__ import annotations

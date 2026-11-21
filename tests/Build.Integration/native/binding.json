@@ -1,7 +1,0 @@
-{
-  "scope": "A13 build-conformance fixture, not a domain Engine",
-  "abi_major": 1,
-  "abi_minor": 0,
-  "exports": ["nw_build_value", "nw_build_version"],
-  "semantics": "value adds 37 modulo 2^64; version returns 1; no retained resources"
-}

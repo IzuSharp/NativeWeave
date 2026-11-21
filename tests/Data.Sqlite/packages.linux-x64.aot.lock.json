@@ -23,15 +23,45 @@
       "nativeweave.data": {
         "type": "Project"
       },
+      "nativeweave.data.streaming": {
+        "type": "Project",
+        "dependencies": {
+          "NativeWeave.Data": "[0.1.0-preview.1, )"
+        }
+      },
+      "nativeweave.database": {
+        "type": "Project",
+        "dependencies": {
+          "NativeWeave.Core": "[0.1.0-preview.1, )",
+          "NativeWeave.Data": "[0.1.0-preview.1, )",
+          "NativeWeave.Data.Streaming": "[0.1.0-preview.1, )",
+          "NativeWeave.Database.Transactions": "[0.1.0-preview.1, )",
+          "NativeWeave.Query.Binding": "[0.1.0-preview.1, )"
+        }
+      },
       "nativeweave.database.sqlite": {
         "type": "Project",
         "dependencies": {
           "NativeWeave.Core": "[0.1.0-preview.1, )",
+          "NativeWeave.Data": "[0.1.0-preview.1, )",
+          "NativeWeave.Database": "[0.1.0-preview.1, )"
+        }
+      },
+      "nativeweave.database.transactions": {
+        "type": "Project",
+        "dependencies": {
           "NativeWeave.Data": "[0.1.0-preview.1, )"
         }
       },
       "NativeWeave.Interop.Abi": {
         "type": "Project"
+      },
+      "nativeweave.query.binding": {
+        "type": "Project",
+        "dependencies": {
+          "NativeWeave.Data": "[0.1.0-preview.1, )",
+          "NativeWeave.Interop.Abi": "[0.1.0-preview.1, )"
+        }
       }
     },
     "net11.0/linux-x64": {

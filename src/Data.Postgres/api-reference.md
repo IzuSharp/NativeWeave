@@ -1,6 +1,6 @@
-# NativeWeave.Database.PostgreSql component API reference
+# NativeWeave.Database.PostgreSql API reference
 
-Generated from the compiled product assembly and its XML comments by `tests/Data.Postgres/ApiCheck`. B01 data descriptors and transport only; database provider execution belongs to downstream tasks.
+Generated from the compiled product assembly and its XML comments by `tests/Data.Postgres/ApiCheck`. Covers provider options, Engine preflight, and the integrated Create/UsePostgreSql data source factories. Exact declarations retain the pinned Design identity in `public-api.expected.json`; the historical B02/B04 ownership slice remains in `downstream-composition.json`.
 
 ## `F:NativeWeave.Database.PostgreSql.PostgreSqlTlsMode.DisableForLocalDevelopment`
 
@@ -17,6 +17,46 @@ NativeWeave.Database.PostgreSql.PostgreSqlTlsMode.VerifyFull = 0
 ```
 
 **summary:** Requires TLS, a trusted root and a matching server hostname; the default.
+
+## `M:NativeWeave.Database.PostgreSql.PostgreSqlDataSource.Create(System.String,System.Action{NativeWeave.Database.PostgreSql.PostgreSqlOptions})`
+
+```csharp
+public static NativeWeave.Database.DataSource NativeWeave.Database.PostgreSql.PostgreSqlDataSource.Create(string connectionString, System.Action<NativeWeave.Database.PostgreSql.PostgreSqlOptions>? configure = null)
+```
+
+**summary:** Creates one independently owned lazy SQLx PostgreSQL data source.
+
+**param connectionString:** An explicit TCP PostgreSQL URI; ambient connection policy is rejected.
+
+**param configure:** An optional synchronous options callback, snapshotted before native admission.
+
+**returns:** A data source to dispose after its sessions finish.
+
+**exception:** is null.
+
+**exception:** The connection or typed security policy is invalid.
+
+**exception:** The exact packaged module fails negotiation.
+
+## `M:NativeWeave.Database.PostgreSql.PostgreSqlDataSourceBuilderExtensions.UsePostgreSql(NativeWeave.Database.DataSourceBuilder,System.String,System.Action{NativeWeave.Database.PostgreSql.PostgreSqlOptions})`
+
+```csharp
+public static NativeWeave.Database.DataSourceBuilder NativeWeave.Database.PostgreSql.PostgreSqlDataSourceBuilderExtensions.UsePostgreSql(this NativeWeave.Database.DataSourceBuilder builder, string connectionString, System.Action<NativeWeave.Database.PostgreSql.PostgreSqlOptions>? configure = null)
+```
+
+**summary:** Snapshots explicit connection and TLS policy without opening a connection.
+
+**param builder:** The single-writer builder.
+
+**param connectionString:** A nonempty explicit PostgreSQL TCP URI.
+
+**param configure:** Optional synchronous configuration; failure leaves the builder unchanged.
+
+**returns:** The supplied builder.
+
+**exception:** The builder or connection is null.
+
+**exception:** A setting is invalid.
 
 ## `M:NativeWeave.Database.PostgreSql.PostgreSqlOptions.#ctor`
 
@@ -40,9 +80,9 @@ Compiler-generated record/delegate member; inherits the documented type semantic
 public static NativeWeave.Interop.EngineDescriptor NativeWeave.Database.PostgreSql.PostgreSqlDataSource.Engine { get; }
 ```
 
-**summary:** Gets the immutable descriptor for the maintainer-built PostgreSQL component.
+**summary:** Gets the immutable descriptor of the complete PostgreSQL Database Host asset.
 
-**remarks:** Only postgres.component.v1 is advertised. Native adapter operations are Rust-local hooks for B04, not callable datasource exports. The native asset stays resident after Inspect; the descriptor has no disposal operation. Missing or mismatched assets are reported by Inspect using EngineLoadException.
+**remarks:** The canonical database bootstrap reports only implemented capabilities. The inspected module remains resident; datasource disposal joins its runtime rather than unloading code.
 
 ## `P:NativeWeave.Database.PostgreSql.PostgreSqlOptions.ApplicationName`
 
@@ -90,9 +130,19 @@ public NativeWeave.Database.PostgreSql.PostgreSqlTlsMode NativeWeave.Database.Po
 public static class NativeWeave.Database.PostgreSql.PostgreSqlDataSource
 ```
 
-**summary:** Exposes the stateless PostgreSQL provider component descriptor.
+**summary:** Creates PostgreSQL datasources backed by the maintainer-built Rust Database Host.
 
-**remarks:** The current component assembly publishes Engine preflight plus exact standalone options. The downstream B04 host composes the pinned Create and UsePostgreSql factories with the actual datasource/session owners. This component does not advertise host operation exports. Reading Engine is thread-safe and performs no file access, native call, executor creation or connection opening; Inspect hashes and loads the exact maintainer-built component and starts no runtime.
+**remarks:** Reading Engine is pure metadata. Inspect verifies the asset and starts no runtime or connection. Create snapshots typed options before native admission.
+
+## `T:NativeWeave.Database.PostgreSql.PostgreSqlDataSourceBuilderExtensions`
+
+```csharp
+public static class NativeWeave.Database.PostgreSql.PostgreSqlDataSourceBuilderExtensions
+```
+
+**summary:** Configures the independently packaged SQLx PostgreSQL engine.
+
+**remarks:** The builder remains single-writer. Configuration snapshots managed values without I/O; Build negotiates the separately packaged native engine and creates the source owner.
 
 ## `T:NativeWeave.Database.PostgreSql.PostgreSqlOptions`
 

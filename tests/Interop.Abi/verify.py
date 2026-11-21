@@ -27,7 +27,7 @@ def source_hashes(include_outputs=True):
             if path.is_file() and not any(part in ("bin", "obj", "__pycache__") for part in path.relative_to(ROOT).parts):
                 if include_outputs or path.name != "api-reference.md":
                     source[str(path.relative_to(ROOT))] = digest(path)
-    for name in ["global.json", "rust-toolchain.toml", "Directory.Build.props", "Directory.Build.targets", "Cargo.lock", "docs/guides/interop-abi.md"]:
+    for name in ["global.json", "rust-toolchain.toml", "Directory.Build.props", "Cargo.lock", "docs/guides/interop-abi.md"]:
         source[name] = digest(ROOT / name)
     return source
 

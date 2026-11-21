@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="ApiCheck/**/*.cs" />
+    <Compile Include="../ProviderProfileChecks.cs" Link="ProviderProfileChecks.cs" />
     <ProjectReference Include="../../src/Data.Sqlite/NativeWeave.Database.Sqlite.csproj" />
     <Compile Include="../../samples/api/data-sqlite/SqliteExamples.cs" Link="SqliteExamples.cs" />
   </ItemGroup>

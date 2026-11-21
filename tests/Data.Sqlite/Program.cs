@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using NativeWeave.Database.Sqlite;
-using NativeWeave.Interop;
 using NativeWeave.Sqlite.Samples;
 
 if (args.Contains("--aot") && RuntimeFeature.IsDynamicCodeSupported)
@@ -52,13 +51,9 @@ byte[] malformed = (byte[])record.Clone(); malformed[136] = 2;
 Check(Native.Probe(Path.Combine(root, "invalid.db"), malformed, out _) == 1 && !File.Exists(Path.Combine(root, "invalid.db")), "native rejects noncanonical Boolean before file I/O");
 
 uint runtimes = Native.RuntimeCount();
-EngineDescriptor descriptor = SqliteDataSource.Engine;
-Check(descriptor.EngineId == "nativeweave.database.sqlite" && descriptor.SupportedRuntimeIdentifiers.SequenceEqual(["linux-x64"]), "exact build descriptor");
-EngineInfo info = descriptor.Inspect();
-Check(info.Supports(new EngineCapability("db.sqlite.profile.v1")), "actual bootstrap profile capability");
-Check(!info.Supports(new EngineCapability("db.query.v1")), "component does not advertise B04 query host");
+assertions += ProviderProfileChecks.Component("sqlite", Environment.GetEnvironmentVariable("NW_SQLITE_COMPONENT_ASSET"));
+assertions += ProviderProfileChecks.Host(() => SqliteDataSource.Engine, "sqlite");
 Check(Native.RuntimeCount() == runtimes, "metadata/inspect starts no fixture runtime");
-Check(ReferenceEquals(descriptor, SqliteDataSource.Engine), "cached metadata descriptor");
 Check(Native.RunSuite(Path.Combine(root, "native-suite")) == 0, "actual SQLite/B05 fourteen-scenario suite");
 Check(Native.RuntimeCount() == runtimes + 1, "one explicit test suite runtime");
 Console.WriteLine($"PASS B03 {assertions} assertions; actual SQLite 3.51.3; 14 native provider/B05 scenarios; NativeAOT={!RuntimeFeature.IsDynamicCodeSupported}.");

@@ -1088,7 +1088,7 @@ public NativeWeave.Data.WeaveColumnAttribute.WeaveColumnAttribute(string name)
 
 **exception:** The name is empty or whitespace.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Without this attribute the CLR property symbol name is used unchanged. The generated column member keeps its CLR spelling.
 
@@ -1124,7 +1124,7 @@ public NativeWeave.Data.WeaveTableAttribute.WeaveTableAttribute(string name)
 
 **exception:** The name is empty or whitespace.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** The generator reads source symbols and emits the same TableBuilder calls as manual metadata. It never opens a database, loads a native module, runs Cargo or discovers runtime model types.
 
@@ -1570,7 +1570,7 @@ public bool NativeWeave.Data.WeaveColumnAttribute.Generated { get; init; }
 
 **summary:** Gets or initializes whether the database supplies the value on insertion.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Without this attribute the CLR property symbol name is used unchanged. The generated column member keeps its CLR spelling.
 
@@ -1582,7 +1582,7 @@ public string? NativeWeave.Data.WeaveTableAttribute.DescriptorName { get; init; 
 
 **summary:** Gets or initializes the generated static descriptor class name; default is EntityNameMapping.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** The generator reads source symbols and emits the same TableBuilder calls as manual metadata. It never opens a database, loads a native module, runs Cargo or discovers runtime model types.
 
@@ -1594,7 +1594,7 @@ public string? NativeWeave.Data.WeaveTableAttribute.Schema { get; init; }
 
 **summary:** Gets or initializes the optional exact schema name.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** The generator reads source symbols and emits the same TableBuilder calls as manual metadata. It never opens a database, loads a native module, runs Cargo or discovers runtime model types.
 

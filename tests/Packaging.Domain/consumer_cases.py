@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Actual B24 package consumers, called by the existing release callback.
+"""Actual database package consumers, called by the existing release callback.
 
 Every graph restores into its own cache outside the repository. The unchanged
 accepted strict package validators check the new artifacts. This script is not
@@ -24,7 +24,8 @@ import xml.etree.ElementTree as ET
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(ROOT / "src/Packaging.Domain"))
-from model import ENGINES, LEAVES, RID, load_manifest, module, relative_file, save, sha
+from model import (ENGINES, LEAVES, RID, TASK, load_manifest, module, relative_file,
+                   require_database_package, save, sha, validate_database_payload)
 
 SDK_IMAGE = "mcr.microsoft.com/dotnet/sdk:11.0.100-resolute-amd64@sha256:7913685c883a29dd8ba79da96172f5c6b29ed9be706ebe95935e3ef45f19c9c1"
 FLAGS = ["-p:UseSharedCompilation=false", "-nr:false", "-m:1"]
@@ -33,12 +34,8 @@ SYSTEM_DEPENDENCIES = ["libc.so.6", "libgcc_s.so.1", "libm.so.6", "libdl.so.2", 
 GRAPHS = {
     "sqlite": (["NativeWeave.Database.Sqlite"], ["SQLITE"], ["sqlite"]),
     "postgresql": (["NativeWeave.Database.PostgreSql"], ["POSTGRES"], ["postgresql"]),
-    "server": (["NativeWeave.Server"], ["SERVER"], ["none"]),
-    "grpc": (["NativeWeave.Server.Grpc"], ["SERVER", "GRPC"], ["none"]),
-    "mcp": (["NativeWeave.Server.Mcp"], ["SERVER", "MCP"], ["none"]),
-    "combined": (["NativeWeave.Database.Sqlite", "NativeWeave.Database.PostgreSql",
-                  "NativeWeave.Server.Grpc", "NativeWeave.Server.Mcp"],
-                 ["SQLITE", "POSTGRES", "SERVER", "GRPC", "MCP"], ["sqlite", "postgresql"]),
+    "combined": (["NativeWeave.Database.Sqlite", "NativeWeave.Database.PostgreSql"],
+                 ["SQLITE", "POSTGRES"], ["sqlite", "postgresql"]),
 }
 compat = module("b24_consumer_compat", "src/Verification.Compatibility/compatibility.py")
 profile = module("b24_consumer_linux_profile", "src/Packaging.Linux/linux_profile.py")
@@ -91,6 +88,7 @@ def project(path, references, versions, symbols, *, override=None, edited=False)
         "TargetFramework": "net11.0", "LangVersion": "15.0", "OutputType": "Exe",
         "AssemblyName": "B24Consumer", "Nullable": "enable", "ImplicitUsings": "enable",
         "TreatWarningsAsErrors": "true", "IsAotCompatible": "true",
+        "NuGetAudit": "true", "NuGetAuditMode": "all",
         "JsonSerializerIsReflectionEnabledByDefault": "false",
         "RestorePackagesWithLockFile": "true",
         "DefineConstants": ";".join([*symbols, *(["MANAGED_EDIT"] if edited else [])]),
@@ -121,23 +119,47 @@ def selected_record(record, roots):
 
 
 def required_checks(graph, *, edited=False):
-    _, symbols, _ = GRAPHS[graph]
-    result = []
-    if "SQLITE" in symbols or "POSTGRES" in symbols:
-        result += ["typed-entity-materialization", "typed-native-database-roundtrip", "database-local-owners-retired"]
-    if "SERVER" in symbols:
-        result += ["actual-http-1.1-tls", "actual-http-2.0-tls", "server-owners-retired"]
-    if "GRPC" in symbols:
-        result.append("actual-grpc-http2-terminal-status-and-result")
-    if "MCP" in symbols:
-        result.append("actual-mcp-typed-result")
+    if graph not in GRAPHS:
+        raise ValueError("Unknown database consumer graph")
+    result = ["typed-entity-materialization", "typed-native-database-roundtrip", "typed-fluent-dto-query",
+              "database-local-owners-retired", "actual-database-native-mapping"]
     if edited:
-        result += ["ordinary-added-entity-dto-handler", "ordinary-added-http-handler"]
+        result.append("ordinary-added-entity-dto-query")
     return result
 
 
+def isolate_environment(mode, work):
+    """Local PATH isolation and container absence are distinct evidence claims."""
+    environment = os.environ.copy()
+    linker_path = environment.pop("LD_LIBRARY_PATH", None)
+    environment.update(DOTNET_CLI_TELEMETRY_OPTOUT="1", DOTNET_CLI_USE_MSBUILD_SERVER="0",
+                       MSBUILDDISABLENODEREUSE="1", DOTNET_CLI_HOME=str(work / "dotnet-home"))
+    tools = ("cargo", "rustc", "rustup")
+    initial_absence = {tool: shutil.which(tool) is None for tool in tools}
+    if mode == "pristine":
+        if os.environ.get("B24_PRISTINE_IMAGE") != SDK_IMAGE or not all(initial_absence.values()):
+            raise ValueError("Pristine consumers require the pinned SDK image without Rust")
+        if any(Path(path).exists() for path in ("/root/.cargo/bin", "/usr/local/cargo/bin", "/opt/rust", "/usr/local/rustup")):
+            raise ValueError("A Rust toolchain directory is present in the pristine consumer")
+    elif mode == "local":
+        entries = environment.get("PATH", "").split(os.pathsep)
+        environment["PATH"] = os.pathsep.join(entry for entry in entries
+            if entry and not any((Path(entry) / tool).exists() for tool in tools))
+    else:
+        raise ValueError("Unknown consumer environment")
+    for key in tuple(environment):
+        if key.startswith(("CARGO_", "RUSTUP_", "RUSTC", "RUSTFLAGS", "RUSTDOC")) or key in ("RUST_TOOLCHAIN", "RUST_LIB_SRC", "B24_PRISTINE_IMAGE", "NUGET_API_KEY"):
+            environment.pop(key, None)
+    absence = {tool: shutil.which(tool, path=environment.get("PATH", "")) is None for tool in tools}
+    if not all(absence.values()):
+        raise ValueError("Consumer PATH still resolves a Rust tool before traps")
+    if any(shutil.which(tool, path=environment.get("PATH", "")) is None for tool in ("dotnet", "clang")):
+        raise ValueError("Consumer needs .NET and clang outside directories containing Rust tools")
+    return environment, linker_path, initial_absence, absence
+
+
 class Consumer:
-    def __init__(self, manifest_path, closure, feed, output, mode):
+    def __init__(self, manifest_path, closure, feed, output, mode, consumer_environment="pristine"):
         if mode == "full" and closure != "candidate":
             raise ValueError("The full assembled negative/upgrade gate belongs to the candidate closure")
         self.manifest_path = manifest_path
@@ -154,14 +176,7 @@ class Consumer:
         compat.validate_closure(self.release, self.packages)
         if any(sha(path) != self.items[name]["sha256"] for name, path in self.packages.items()):
             raise ValueError("Destination differs from the frozen domain handoff")
-        self.environment = os.environ.copy()
-        self.linker_path = self.environment.pop("LD_LIBRARY_PATH", None)
-        self.environment.update(DOTNET_CLI_TELEMETRY_OPTOUT="1", DOTNET_CLI_USE_MSBUILD_SERVER="0", MSBUILDDISABLENODEREUSE="1")
-        absence = {tool: shutil.which(tool) is None for tool in ("cargo", "rustc", "rustup")}
-        if os.environ.get("B24_PRISTINE_IMAGE") != SDK_IMAGE or not all(absence.values()):
-            raise ValueError("B24 acceptance consumers require the existing pinned pristine SDK image without Rust")
-        if any(Path(path).exists() for path in ("/root/.cargo/bin", "/usr/local/cargo/bin", "/opt/rust", "/usr/local/rustup")):
-            raise ValueError("A Rust toolchain directory is present in the pristine consumer")
+        self.environment, self.linker_path, initial_absence, absence = isolate_environment(consumer_environment, self.work)
         if self.work.is_relative_to(ROOT):
             raise ValueError("Consumer must be outside the checkout")
         trap = self.work / "rust-trap"
@@ -172,10 +187,12 @@ class Consumer:
             path.write_text('#!/bin/sh\nprintf unexpected-rust >> "' + str(self.marker) + '"\nexit 99\n')
             path.chmod(0o755)
         self.environment["PATH"] = str(trap) + os.pathsep + self.environment["PATH"]
-        self.result = {"schemaVersion": 1, "task": "B24", "passed": False, "rid": RID,
+        self.result = {"schemaVersion": 1, "task": TASK, "passed": False, "rid": RID,
             "source_commit": self.release["source_commit"], "packages": {name: sha(path) for name, path in self.packages.items()},
             "manifestSha256": sha(manifest_path), "closure": closure, "mode": mode,
-            "pristine_machine": True, "image": SDK_IMAGE, "architecture": platform.machine(),
+            "consumer_environment": consumer_environment, "pristine_machine": consumer_environment == "pristine",
+            "image": SDK_IMAGE if consumer_environment == "pristine" else None, "architecture": platform.machine(),
+            "host_rust_absence_before_isolation": initial_absence,
             "rust_absence_before_trap": absence, "outside_source_tree": True,
             "publicDomainReleaseAccepted": False, "newDomainSignerAuthenticated": False,
             "commands": [], "graphs": {}, "negativeCases": [],
@@ -184,8 +201,9 @@ class Consumer:
                 "src/Packaging.Domain/consume.py", "src/Packaging.Domain/model.py",
                 "src/Packaging.Linux/linux_profile.py",
                 "tests/Packaging.Domain/consumer_cases.py", "tests/Packaging.Domain/negative_cases.py",
+                "tests/Packaging.Domain/registry_cases.py",
                 "tests/Packaging.Domain/runtime_verify.py")}}
-        self.transfer = {"schemaVersion": 1, "task": "B24", "source_commit": self.release["source_commit"],
+        self.transfer = {"schemaVersion": 1, "task": TASK, "source_commit": self.release["source_commit"],
                          "rid": RID, "packages": self.result["packages"], "graphs": {}}
         self.flush()
 
@@ -244,6 +262,9 @@ class Consumer:
         packages = {item["id"]: self.packages[item["id"]] for item in record["packages"]}
         assets = json.loads((directory / "obj/project.assets.json").read_text())
         compat.validate_closure(record, packages, assets)
+        for name, item in assets["libraries"].items():
+            if item["type"] == "package":
+                require_database_package(name.rsplit("/", 1)[0])
         # The actual restored archive, not merely the feed, must have exact bytes.
         for item in record["packages"]:
             cached = directory / "cache" / item["id"].lower() / item["version"].lower() / (item["id"].lower() + "." + item["version"].lower() + ".nupkg")
@@ -273,9 +294,16 @@ class Consumer:
         actual = {path.name for path in directory.glob("NativeWeave.*.assets.json")}
         if actual != {"NativeWeave." + engine + ".assets.json" for engine in expected}:
             raise ValueError("Missing or undeclared domain output record")
-        for compiler in ("NativeWeave.Query.Generator.dll", "NativeWeave.Server.Generator.dll",
-                         "NativeWeave.Server.Mcp.Generator.dll", "NativeWeave.Packaging.Tasks.dll"):
-            if (directory / compiler).exists():
+        actual_native = {path.relative_to(directory).as_posix() for path in directory.rglob("*.so")}
+        if actual_native != {value["relativePath"] for value in records.values()}:
+            raise ValueError("Build/publish output contains undeclared native libraries")
+        selected_ids = {item["id"] for item in selected["packages"]}
+        for assembly in directory.rglob("NativeWeave.*.dll"):
+            require_database_package(assembly.stem)
+            if assembly.stem not in selected_ids:
+                raise ValueError("Output assembly is outside the selected database graph")
+        for compiler in ("NativeWeave.Query.Generator.dll", "NativeWeave.Packaging.Tasks.dll"):
+            if any(directory.rglob(compiler)):
                 raise ValueError("Compiler/package tooling leaked into runtime output: " + compiler)
         return records
 
@@ -297,12 +325,17 @@ class Consumer:
             if len(lines) != 1:
                 raise ValueError("Consumer did not produce exactly one terminal receipt")
             receipt = json.loads(lines[0])
-            if receipt.get("task") != "B24" or receipt.get("provider") != provider:
+            if receipt.get("task") != TASK or receipt.get("provider") != provider:
                 raise ValueError("Consumer receipt identity differs")
             if aot and receipt.get("dynamicCodeSupported") is not False:
                 raise ValueError("Actual Native AOT witness missing")
             if not set(required_checks(graph, edited=edited)).issubset(receipt.get("checks", [])):
                 raise ValueError("Actual consumer omitted required domain operations")
+            engine = "database." + provider
+            asset = self.items[ENGINES[engine][0] + ".Native"]["native"]
+            expected_mapping = [{"file": ENGINES[engine][1], "sha256": asset["sha256"]}]
+            if receipt.get("nativeLibraries") != expected_mapping:
+                raise ValueError("Actually mapped native library differs from the selected database asset")
             observed.append(receipt)
         return observed
 
@@ -351,7 +384,7 @@ class Consumer:
                 raise ValueError("Ordinary managed edit/AOT publish changed native bytes")
         row.update(aot=self.execute(graph, directory, [published / "B24Consumer"], graph + "-aot", aot=True, edited=edited),
             nativeAfter=native_after, executableSha256=sha(published / "B24Consumer"), aotElfAudit=aot_audit,
-            offlineAfterRestore=True, addedEntityDtoHandler=edited,
+            offlineAfterRestore=True, addedEntityDto=edited,
             finalProjectSha256=sha(csproj),
             finalSourceSha256={path.name: sha(path) for path in directory.glob("*.cs")},
             locks={path.name: sha(path) for path in directory.glob("packages*.lock.json")})
@@ -378,7 +411,9 @@ class Consumer:
         compat.validate_closure(self.release, self.packages)
         if {name: sha(path) for name, path in self.packages.items()} != self.result["packages"]:
             raise ValueError("Destination packages changed during consumption")
-        self.result.update(passed=True, rust_invocation_trap_fired=False,
+        payloads = {item["id"]: validate_database_payload(self.packages[item["id"]], item)
+                    for item in self.release["packages"]}
+        self.result.update(passed=True, rust_invocation_trap_fired=False, packagePayloadAudit=payloads,
             historicalFaultSoakPerformanceRerun=False, runtimeOnlyTransferExecuted=False)
         self.flush()
         if self.mode == "full":
@@ -386,7 +421,7 @@ class Consumer:
         save(self.evidence / "index.json", {"files": {path.relative_to(self.evidence).as_posix(): sha(path)
             for path in sorted(self.evidence.rglob("*")) if path.is_file()},
             "scope": "Domain receipts and identity hashes only; no private keys, database, package or runtime payload."})
-        print("PASS B24 actual " + self.mode + " domain package consumption", flush=True)
+        print("PASS " + TASK + " actual " + self.mode + " database package consumption", flush=True)
 
 
 def main():
@@ -396,8 +431,10 @@ def main():
     parser.add_argument("--feed", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--mode", choices=("smoke", "full"), required=True)
+    parser.add_argument("--consumer-environment", choices=("local", "pristine"), default="pristine")
     args = parser.parse_args()
-    consumer = Consumer(args.manifest.resolve(), args.closure, args.feed.resolve(), args.output.resolve(), args.mode)
+    consumer = Consumer(args.manifest.resolve(), args.closure, args.feed.resolve(), args.output.resolve(), args.mode,
+                        args.consumer_environment)
     try:
         consumer.finish()
     except BaseException as error:

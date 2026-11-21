@@ -90,7 +90,7 @@ internal sealed partial class TaskService(DataSource source, CursorCodec cursors
         catch (CommitOutcomeUnknownException error)
         {
             return new(503, JsonSerializer.SerializeToUtf8Bytes(new Problem("outcome_unknown", result.OperationId,
-                "/v1/operations/" + result.OperationId, error.CorrelationId), AppJson.Default.Problem), result.OperationId);
+                "/v1/operations/" + result.OperationId, error.CorrelationId), AppJson.Default.Problem), result.OperationId, error.ProviderCode);
         }
     }
 
@@ -188,7 +188,7 @@ internal sealed partial class TaskService(DataSource source, CursorCodec cursors
         }
     }
 
-    /// <summary>Finite HTTP cleanup transfers unfinished obligations to the engine, without capturing a request context.</summary>
+    /// <summary>Finite application cleanup transfers unfinished obligations to the database engine.</summary>
     internal static async Task CloseSessionAsync(DataSession session)
     {
         try

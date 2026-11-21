@@ -1,32 +1,53 @@
-# PostgreSQL provider component
+# PostgreSQL database provider
 
-B02 implements the PostgreSQL provider over SQLx 0.9.0 and the canonical B01/B07
+`NativeWeave.Database.PostgreSql` supplies the PostgreSQL factory and builder
+extension for the complete [Database Host](data-nativehost.md). Its candidate
+package depends on the shared database facade and the independent
+`NativeWeave.Database.PostgreSql.Native` asset package. An ordinary C# application
+uses PackageReference and the precompiled asset, without a Rust toolchain or
+NativeWeave server/protocol package.
+
+The retained B02 PostgreSQL adapter uses SQLx 0.9.0 and the canonical B01/B07
 contracts. The native component accepts an existing SQLx pool lease and engine
 runtime, executes and streams on that fixed physical session, and supplies the
 same-session B05 transaction driver. It contains no managed PostgreSQL driver,
 second physical pool, global Tokio runtime, or application-specific native model.
 
-The exact design input is NativeWeave-Design commit
+The unchanged declaration and component-oracle checks use NativeWeave-Design commit
 `c62cdb8aee833b6ab1a03e29a3f59f81a1b483f9`. Hashes and the exact current public
 symbol inventory are in `src/Data.Postgres/design-inputs.json` and
 `public-api.expected.json`. The compiled XML contribution is
-[the PostgreSQL component API reference](../../src/Data.Postgres/api-reference.md).
+[the PostgreSQL API reference](../../src/Data.Postgres/api-reference.md).
 
-## Current component and downstream composition
+## Public API and Database Host profile
 
-The component exports `PostgreSqlTlsMode`, `PostgreSqlOptions`, and
-`PostgreSqlDataSource.Engine`. Constructing options and reading Engine perform no
-native load or database I/O. Engine preflight loads the exact maintainer-built
-component asset and advertises only `postgres.component.v1`. That capability
-identifies the bootstrap/profile component; it is not a usable datasource host
-and advertises no B04 datasource, session, cursor or transaction ABI entrypoints.
-The Rust adapter remains available to the B04 native engine by ordinary static
-crate composition.
+The provider exports `PostgreSqlTlsMode`, `PostgreSqlOptions`, and the complete
+`PostgreSqlDataSource` factory and descriptor. Constructing options and reading
+`Engine` perform no native load or database I/O. `Engine.Inspect()` loads the exact
+precompiled Database Host asset, verifies its generated SHA-256, architecture and
+canonical ABI, and reports the implemented capabilities. It creates no source,
+worker runtime or database connection; the module remains resident.
 
-B02's packet explicitly permits actual backend/component ABI verification without
-adding a reverse dependency on B04. Consequently these **exact pinned declarations**
-are recorded in `src/Data.Postgres/downstream-composition.json` for B04 to compose
-with its actual `DataSource` and `DataSourceBuilder` owners:
+| Public profile property | PostgreSQL value |
+| --- | --- |
+| Engine ID | `database.postgresql` |
+| Threading model | `EngineLocalAsync` |
+| Bootstrap | `nw_database_postgresql_get_abi_v1` |
+| Linux x64 asset | `libnw_database_postgresql.so` |
+| Generated output record | `NativeWeave.database.postgresql.assets.json` |
+
+The bootstrap reports **24** capabilities: every name defined in
+[`DatabaseEngineProfile`](../../src/Data.NativeHost/DatabaseOptions.cs) except
+`db.decimal.text.v1`. This includes `db.query.v1`, transactions/savepoints,
+streaming, migrations, schema reading, relations, `db.row-lock.v1` and
+`db.decimal.numeric.v1`. The actual advertised mask is composed by the
+[native query profile](../../native/database/host/src/query.rs) and
+[Host bootstrap](../../native/database/host/src/abi.rs). The private B02 component's
+`postgres.component.v1` bootstrap remains a component-test input; it is not the
+public provider descriptor or the packaged Database Host.
+
+The current compiled inventory contains **15** exact symbols, including these
+existing factories:
 
 ```csharp
 public static NativeWeave.Database.DataSource Create(
@@ -38,12 +59,18 @@ public static NativeWeave.Database.DataSourceBuilder UsePostgreSql(
 ```
 
 The first belongs to `PostgreSqlDataSource`; the second belongs to
-`PostgreSqlDataSourceBuilderExtensions`. The component supplies the configuration
-snapshot, immutable kind8 record and Rust connect/session hooks for that
-composition. No placeholder datasource type, throwing factory, alternate public
-factory or second host is introduced. Complete host AOT/NuGet consumption remains
-B04/B21/B24 work using these exact component commits. This assembly is not added to
-the automatic preview publication scope by B02.
+`PostgreSqlDataSourceBuilderExtensions`. `UsePostgreSql` snapshots typed options
+into the immutable kind8 record and selects the provider without native I/O. The
+builder is single-writer and permits explicit source limits before `Build`.
+`Create` uses default source limits and calls `Build`, which negotiates the Host
+and creates a source-owned lazy pool/runtime without opening a connection or
+running migrations. Acquire sessions through `OpenSessionAsync` and dispose both
+sessions and source asynchronously.
+
+`src/Data.Postgres/downstream-composition.json` preserves the original ownership
+of these declarations; they are included in the integrated
+`public-api.expected.json` and compiled reference. They are implemented factories,
+not pending declarations or design stubs.
 
 ## Configuration and preflight
 
@@ -51,29 +78,40 @@ the automatic preview publication scope by B02.
 using NativeWeave.Database.PostgreSql;
 using NativeWeave.Interop;
 
-var options = new PostgreSqlOptions
-{
-    RootCertificatePath = "/etc/nativeweave/postgres-root.pem",
-    ApplicationName = "Orders",
-    ConnectTimeout = TimeSpan.FromSeconds(15)
-};
-// VerifyFull is already the default. Configuration alone opens no connection.
+// Inspection is optional and opens no database connection.
 EngineDescriptor descriptor = PostgreSqlDataSource.Engine;
+var information = descriptor.Inspect();
+
+await using var source = PostgreSqlDataSource.Create(
+    "postgresql://orders@db.example.test/orders", options =>
+{
+    options.RootCertificatePath = "/etc/nativeweave/postgres-root.pem";
+    options.ApplicationName = "Orders";
+    options.ConnectTimeout = TimeSpan.FromSeconds(15);
+    // VerifyFull is already the default.
+});
+await using var session = await source.OpenSessionAsync();
 ```
 
 The minimum and advanced executable examples live in
 `samples/api/data-postgres`. Ordinary `Inspect()` consumes the bounded A02 output
 record emitted beside the facade; the advanced example also supplies an explicit
-asset path while retaining hash, architecture, ABI and capability verification.
+Host asset path through `NW_PG_HOST_ASSET` while retaining hash, architecture, ABI
+and `db.query.v1` capability verification.
 The maintainer project hashes an actual precompiled native asset into its `obj`
 compile input and emits its exact output-location record. The default source input
-is `target/release/libnativeweave_data_postgres.so`; an explicit
-`NativeWeavePostgresAssetPath` MSBuild property selects another actual asset. Missing
+is `target/release/libnw_database_postgresql.so`. The maintainer properties
+`NativeWeavePostgresAssetPath`, `NativeWeavePostgresRuntimeIdentifier`, and
+`NativeWeavePostgresAssetName` select explicit existing-asset inputs. Its default
+ordinary/AOT output path is
+`runtimes/linux-x64/native/libnw_database_postgresql.so`. Missing
 input is a build error, never a zero-hash placeholder. No machine-specific ELF hash
 is committed or assumed reproducible on another linker/machine. The verifier binds
 the generated identity, record, copied file and executable separately. The existing
 maintainer build compiles Rust before the solution; an ordinary application
-consuming a future assembled package does not run Cargo.
+consuming the candidate provider package does not run Cargo. Candidate native-leaf
+selection and the actual SDK publish layout are checked separately by the
+[package consumer gates](packaging-domain.md).
 
 `PostgreSqlOptions` is mutable configuration; the owning factory snapshots it
 before admission. The snapshot validates defined enum values, strict UTF-8 text,
@@ -210,20 +248,23 @@ then transfers that lease to the provider's session-mutating retirement path and
 joins physical closure. The observer verifies zero advisory locks afterwards. A
 failed close does not prove the remote lock disappeared.
 
-## Verification and scope
+## Host preflight and retained component verification
 
 Run from a Linux x64 maintainer checkout with the pinned Rust/.NET toolchains and
-PostgreSQL18 binaries available:
+PostgreSQL18 binaries available. Build the actual PostgreSQL Database Host with
+the repository's maintainer build first, then run against the pinned Design snapshot:
 
 ```sh
 python3 tests/Data.Postgres/verify.py \
   --output artifacts/B02/attempt-001 \
+  --design-root /path/to/locked/NativeWeave-Design \
   --postgres-bin /path/to/postgres18/bin
 ```
 
 Offline SDK/AOT packages can be selected with `--offline-config /path/to/NuGet.Config`.
-The verifier builds the maintainer native component, then supplies its exact
-precompiled path to the C# build. Generated asset metadata stays under `obj`; source
+The verifier separately builds the private native component and test-only fixture.
+It supplies the exact precompiled complete Host asset to the C# build and checks
+the integrated **15-symbol** API/XML/reference. Generated asset metadata stays under `obj`; source
 files remain unchanged. `--write-reference` regenerates the compiled reference
 before the final unchanged-source run; `--update-locks` is an explicit preparation
 step, while normal verification requires locked restores. No test silently succeeds when PostgreSQL or TLS inputs are
@@ -237,15 +278,26 @@ rows cover TLS wrong hostname/untrusted root/expired certificate/plaintext opt-i
 B05 savepoint rollback-to/release, cancellation before commit dispatch, unsupported
 isolation, bounded admission, empty-result metadata, drain-timeout retirement,
 server-terminated sessions and restored pool permits. Managed tests add exact option
-snapshots, malformed native records and component preflight. The same real provider
-suite executes through a separate test-only ABI in JIT and Linux Native AOT.
+snapshots and malformed native records. Public preflight checks the actual Host
+engine ID, capability set, bootstrap, native hash and cached inspection, including
+that inspection creates no Host runtime or live owners. The private component
+bootstrap is checked independently. The same real provider suite executes through
+a separate test-only ABI in JIT and Linux Native AOT; these provider assertions do
+not depend on replacing the component fixture with a Host-only smoke test.
 
 Evidence binds exact source, locks, features, toolchains, native and managed artifact
 hashes, server identity, certificate identities, commands, outcomes and cleanup.
-The test ABI is not shipped as an application-facing provider surface. Linux x64
-component completion does not claim Windows acceptance, pristine full-package
-consumption, an assembled B04 host, long-running load results or performance gains.
-Independent review and final batch acceptance remain separate from these tests.
+Private-component and complete-Host native identities are recorded separately.
+Ordinary and AOT Host output records and copied files must match the staged Host
+hash. The test ABI is not shipped as an application-facing provider surface.
+
+Host preflight and component execution remain distinct evidence. Their results do
+not establish complete Host query execution or ordinary NuGet consumption. The
+[repository verification gate](../verification.md) separately exercises assembled
+database APIs and out-of-tree PackageReference consumers, including typed
+Fluent/DTO results in JIT and Native AOT and no-Rust consumption. This scope targets
+Linux x64; these component tests imply no Windows, long-load or performance
+acceptance. Independent review and final batch acceptance remain separate.
 
 ### Transaction parent retirement
 

@@ -1,8 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>Exe</OutputType><AssemblyName>NativeWeave.Server.Application.ApiCheck</AssemblyName></PropertyGroup>
-  <ItemGroup>
-    <Reference Include="Microsoft.CodeAnalysis"><HintPath>$(MSBuildSDKsPath)/../Roslyn/bincore/Microsoft.CodeAnalysis.dll</HintPath></Reference>
-    <Reference Include="Microsoft.CodeAnalysis.CSharp"><HintPath>$(MSBuildSDKsPath)/../Roslyn/bincore/Microsoft.CodeAnalysis.CSharp.dll</HintPath></Reference>
-    <ProjectReference Include="../../../src/Server.Application/Generator/NativeWeave.Server.Generator.csproj" />
-  </ItemGroup>
-</Project>

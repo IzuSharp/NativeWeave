@@ -3,7 +3,6 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Json;
 using NativeWeave.Database.PostgreSql;
-using NativeWeave.Interop;
 
 if (args.Contains("--require-aot") && RuntimeFeature.IsDynamicCodeSupported) throw new InvalidOperationException("Actual Native AOT required.");
 int assertions = 0;
@@ -37,11 +36,8 @@ unsafe
         Check(Native.Options(bytes, (uint)record.Length - 1) != 0);
     }
 }
-EngineDescriptor descriptor = PostgreSqlDataSource.Engine;
-Check(descriptor.EngineId == "nativeweave.postgres.component");
-EngineInfo info = descriptor.Inspect();
-Check(ReferenceEquals(info, descriptor.Inspect(new() { NativeAssetPath = Environment.GetEnvironmentVariable("NW_PG_COMPONENT_ASSET") })));
-Check(info.Supports(new("postgres.component.v1")) && info.Capabilities.Count == 1);
+assertions += ProviderProfileChecks.Component("postgresql", Environment.GetEnvironmentVariable("NW_PG_COMPONENT_ASSET"));
+assertions += ProviderProfileChecks.Host(() => PostgreSqlDataSource.Engine, "postgresql", Environment.GetEnvironmentVariable("NW_PG_HOST_ASSET"));
 if (Environment.GetEnvironmentVariable("NW_PG_OPTION_RECORD") is string optionPath) File.WriteAllBytes(optionPath, record);
 Check(Native.Run() == 0);
 Console.WriteLine($"PASS managed B02 assertions={assertions}; dynamicCodeSupported={RuntimeFeature.IsDynamicCodeSupported}; actual PostgreSQL provider/TLS/transaction oracle suite completed; native owners retired before return.");

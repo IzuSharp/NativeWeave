@@ -1,5 +1,0 @@
-syntax = "proto3";
-package nativeweave.acceptance;
-option csharp_namespace = "NativeWeave.Grpc.Tests.Messages";
-message EchoMessage { string text = 1; int32 number = 2; bytes payload = 3; }
-message CountMessage { int64 total = 1; }

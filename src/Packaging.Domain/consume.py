@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the manifest-driven B24 consumer without introducing another protocol."""
+"""Run the manifest-driven database PackageReference consumer."""
 from pathlib import Path
 import runpy
 

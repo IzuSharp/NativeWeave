@@ -1,10 +1,10 @@
-name: Linux candidate
+name: Linux database candidate
 on:
   workflow_call:
     inputs:
       version:
         type: string
-        default: 0.1.0-preview.1
+        default: 0.1.0-db-scope.1
       source-commit:
         type: string
         default: ""
@@ -17,14 +17,13 @@ jobs:
   build:
     name: Build, package and Native AOT
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     services:
       postgres:
         image: postgres:18.0@sha256:41fc5342eefba6cc2ccda736aaf034bbbb7c3df0fdb81516eba1ba33f360162c
         env:
           POSTGRES_USER: nativeweave
           POSTGRES_DB: postgres
-          # Isolated test database: the permission oracle creates its own login role.
           POSTGRES_HOST_AUTH_METHOD: trust
         ports:
           - "127.0.0.1:5432:5432"
@@ -32,7 +31,7 @@ jobs:
           --health-cmd "pg_isready -U nativeweave -d postgres"
           --health-interval 5s --health-timeout 5s --health-retries 12
     outputs:
-      artifact: nativeweave-linux-${{ github.run_id }}-${{ github.run_attempt }}
+      artifact: nativeweave-database-linux-${{ github.run_id }}-${{ github.run_attempt }}
     env:
       CI: "true"
       DOTNET_NOLOGO: "true"
@@ -42,7 +41,21 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ inputs.source-commit || github.sha }}
+          ref: ${{ inputs.source-commit || github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Read immutable historical database API signatures
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: IzuSharp/NativeWeave-Design
+          ref: c62cdb8aee833b6ab1a03e29a3f59f81a1b483f9
+          path: artifacts/frozen-design
+          persist-credentials: false
+      - name: Read immutable historical Core API acceptance inputs
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          repository: IzuSharp/Plan
+          ref: 8afa0311f45ab8a8157fc45c51e95a0b17dd09f2
+          path: artifacts/frozen-plan
           persist-credentials: false
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
@@ -50,41 +63,33 @@ jobs:
       - name: Install native build prerequisites and pinned Rust
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends clang zlib1g-dev qemu-user
+          sudo apt-get install -y --no-install-recommends clang zlib1g-dev libssl-dev qemu-user bison flex python3-cryptography
           rustup toolchain install 1.100.0 --profile minimal --component rustfmt --component clippy
-      - name: Verify source, package, API documentation and actual AOT consumers
+      - name: Prepare pinned PostgreSQL tools for real TLS and process fault oracles
+        run: bash eng/postgres-tools.sh
+      - name: Verify database workspaces, API, regressions and actual package JIT/AOT consumers
         run: python3 eng/build.py verify --version "$PACKAGE_VERSION"
-      - name: Verify a fresh Linux SDK container with no Rust installed
-        run: |
-          docker run --rm \
-            -v "$PWD:/work:ro" -v "$PWD/artifacts:/work/artifacts" -w /work \
-            -e PACKAGE_VERSION -e DOTNET_CLI_TELEMETRY_OPTOUT=1 \
-            mcr.microsoft.com/dotnet/sdk:11.0.100-resolute-amd64@sha256:7913685c883a29dd8ba79da96172f5c6b29ed9be706ebe95935e3ef45f19c9c1 \
-            bash eng/consume-linux.sh
       - name: Reject generated source or dependency drift
         run: git diff --exit-code
-      - name: Verify Task-04 Linux package closure and runtime transfer
+      - name: Verify retained Core package closure and minimum CPU/runtime transfer
         run: bash eng/verify-task04-linux.sh
-      - name: Reject Task-04 source or dependency drift
+      - name: Reject shared packaging source or dependency drift
         run: git diff --exit-code
-      - name: Verify Task-07 domain packages and pristine Linux consumers
+      - name: Verify database release recovery, no-Rust SDK consumption and runtime-only transfer
         run: bash eng/verify-task07-linux.sh
-      - name: Reject Task-07 source or dependency drift
+      - name: Reject database packaging source or dependency drift
         run: git diff --exit-code
-      - name: Restore runner ownership of exported Task-07 evidence
+      - name: Restore runner ownership of exported database evidence
         if: always()
         run: |
-          # Atomic JSON files created by root inside the SDK container are 0600.
-          # Only the declared export directories change owner; working feeds,
-          # databases, TLS keys and consumer caches remain outside this scope.
-          task07_owner="$(id -u):$(id -g)"
-          for task07_evidence in \
-            artifacts/task07/B24/prepared/evidence \
-            artifacts/task07/B24/release/evidence \
-            artifacts/task07/B24/runtime/evidence \
-            artifacts/task07/B24/evidence; do
-            if sudo test -d "$task07_evidence"; then
-              sudo chown -R --no-dereference "$task07_owner" "$task07_evidence"
+          db_scope_owner="$(id -u):$(id -g)"
+          for db_scope_evidence in \
+            artifacts/db-scope/prepared/evidence \
+            artifacts/db-scope/release/evidence \
+            artifacts/db-scope/runtime/evidence \
+            artifacts/db-scope/evidence; do
+            if sudo test -d "$db_scope_evidence"; then
+              sudo chown -R --no-dereference "$db_scope_owner" "$db_scope_evidence"
             fi
           done
       - name: Retain verification logs and evidence
@@ -95,22 +100,30 @@ jobs:
           path: |
             artifacts/logs/
             artifacts/verification.json
-            artifacts/consumer-result.json
-            artifacts/pristine-consumer.json
+            artifacts/db-scope/regressions/result.json
+            artifacts/db-scope/regressions/commands.json
+            artifacts/db-scope/regressions/logs/
+            artifacts/db-scope/regression-evidence/
             artifacts/task04/
             !artifacts/task04/**/cargo-target/**
-            artifacts/task07/B24/native-build/manifest.json
-            artifacts/task07/B24/prepared/manifest.json
-            artifacts/task07/B24/prepared/evidence/
-            artifacts/task07/B24/release/evidence/
-            artifacts/task07/B24/runtime/evidence/
-            artifacts/task07/B24/evidence/
+            artifacts/db-scope/native-build/manifest.json
+            artifacts/db-scope/prepared/manifest.json
+            artifacts/db-scope/prepared/evidence/
+            artifacts/db-scope/local-consumer/evidence/
+            artifacts/db-scope/database-lifecycle/
+            artifacts/db-scope/database-business/
+            artifacts/db-scope/release/evidence/
+            artifacts/db-scope/runtime/evidence/
+            artifacts/db-scope/evidence/
           if-no-files-found: error
           retention-days: 14
-      - name: Retain the exact verified candidate
+      - name: Retain the exact verified database candidate
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: nativeweave-linux-${{ github.run_id }}-${{ github.run_attempt }}
-          path: artifacts/packages/
+          name: nativeweave-database-linux-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            artifacts/db-scope/prepared/candidate/feed/
+            artifacts/db-scope/prepared/manifest.json
+            artifacts/db-scope/prepared/candidate/release.json
           if-no-files-found: error
           retention-days: 14

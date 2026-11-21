@@ -1,21 +1,27 @@
-# SQLite provider component
+# SQLite database provider
 
-B03 implements the Rust SQLite execution adapter with SQLx **0.9.0**, Tokio
+`NativeWeave.Database.Sqlite` supplies the SQLite factory and builder extension for
+the complete [Database Host](data-nativehost.md). Its candidate package depends on
+the shared database facade and the independent `NativeWeave.Database.Sqlite.Native`
+asset package. An ordinary C# application uses PackageReference and the precompiled
+asset; it needs no Rust toolchain or NativeWeave server/protocol package.
+
+The retained B03 Rust SQLite execution adapter uses SQLx **0.9.0**, Tokio
 **1.54.1**, and bundled libsqlite3-sys **0.37.0** / SQLite **3.51.3**. C# owns
 configuration and metadata. SQLx owns prepared statements, the physical pool,
 transaction depth, and its dedicated SQLite worker. The adapter starts no global
 runtime and contains no managed database driver or unconditional `Task.Run` path.
 
-The source contract is NativeWeave-Design commit
+The unchanged declaration and component-oracle checks use NativeWeave-Design commit
 [`c62cdb8aee833b6ab1a03e29a3f59f81a1b483f9`](https://github.com/IzuSharp/NativeWeave-Design/tree/c62cdb8aee833b6ab1a03e29a3f59f81a1b483f9),
 especially D14 `docs/database/drivers.md`, D15
 `docs/database/transactions-and-pooling.md`, and the exact public API inventory.
 `tests/Data.Sqlite/design-inputs.json` retains every task-owned API input hash.
 
-## Managed configuration and component applicability
+## Public API and Database Host profile
 
 Import `NativeWeave.Database.Sqlite` for `SqliteOptions`, its four enums, and
-`SqliteDataSource.Engine`. The options are mutable during configuration, then
+`SqliteDataSource.Create` / `Engine`. The options are mutable during configuration, then
 copied once into B01's canonical kind9 control record. The record has six exact
 fields: open mode, journal mode, synchronous mode, BEGIN mode, busy timeout in
 nanoseconds, and canonical foreign-key Boolean. No path, SQL, or parameter value
@@ -24,42 +30,68 @@ is put into provider error messages.
 ```csharp
 using NativeWeave.Database.Sqlite;
 
-var options = new SqliteOptions
+var descriptor = SqliteDataSource.Engine;
+var information = descriptor.Inspect();
+
+await using var source = SqliteDataSource.Create("orders.db", options =>
 {
-    BeginMode = SqliteBeginMode.Immediate,
-    BusyTimeout = TimeSpan.FromMilliseconds(25)
-};
-var component = SqliteDataSource.Engine;
-var information = component.Inspect();
+    options.BeginMode = SqliteBeginMode.Immediate;
+    options.BusyTimeout = TimeSpan.FromMilliseconds(25);
+});
+await using var session = await source.OpenSessionAsync();
 ```
 
-`Engine` reads cached metadata and creates no connection or runtime. `Inspect`
-loads the exact maintainer-built component asset, checks its generated SHA-256,
-and reads the canonical A01 bootstrap. Its sole advertised capability is
-`db.sqlite.profile.v1`; it does not advertise the downstream query/host ABI.
-The default resource-location record and immutable profile are generated under
-`obj` from the actual precompiled asset and copied into ordinary and AOT output.
-Consumer MSBuild never invokes Cargo. A maintainer can supply
-`NativeWeaveSqliteAssetPath`, `NativeWeaveSqliteRuntimeIdentifier`, and
-`NativeWeaveSqliteAssetName` as explicit existing-asset inputs.
+`Engine` reads cached metadata and creates no connection or runtime. `Inspect()`
+loads the exact precompiled Database Host asset, verifies its generated SHA-256,
+architecture and canonical ABI, and reports the implemented capabilities. It
+creates no source, worker runtime or database connection; the module remains
+resident. `Create` snapshots options and builds a source-owned lazy pool/runtime.
+It opens no connection until a session is acquired. Dispose sessions and the source
+asynchronously so their retained native work can retire.
 
-This component project is not independently packed in this task. The existing
-preview publication scope is unchanged. B04 owns `DataSource`,
-`DataSourceBuilder`, runtime/source ownership, and the full host ABI. Consequently
-the following exact Design declarations are composition contributions recorded in
-`src/Data.Sqlite/host-composition.expected.json`, not fake compiled host methods:
-
-| Exact downstream declaration | Native contribution available from B03 |
+| Public profile property | SQLite value |
 | --- | --- |
-| `SqliteDataSource.Create(string path, Action<SqliteOptions>? configure = null) : DataSource` | Snapshot kind9; validate path/profile; build SQLx connect/pool options; accept the B04 runtime, pool lease and shared admission owner |
-| `DataSourceBuilder.UseSqlite(string path, Action<SqliteOptions>? configure = null) : DataSourceBuilder` | The same snapshot and provider selection; B04 owns builder mutation/sealing and source creation |
-| `SqliteDataSourceBuilderExtensions` | Container for the exact extension once B04's receiving type exists |
+| Engine ID | `database.sqlite` |
+| Threading model | `EngineLocalAsync` |
+| Bootstrap | `nw_database_sqlite_get_abi_v1` |
+| Linux x64 asset | `libnw_database_sqlite.so` |
+| Generated output record | `NativeWeave.database.sqlite.assets.json` |
 
-The component compiled inventory contains **29** exact symbols. These three
-downstream symbols are explicitly excluded from that claim. This follows B03's
-packet DAG rationale: actual native/component JIT/AOT acceptance can precede
-B04, while complete host/NuGet consumption belongs to B04/B21/B24. No design
-stub is executed as a product test.
+The bootstrap reports **23** capabilities: every name defined in
+[`DatabaseEngineProfile`](../../src/Data.NativeHost/DatabaseOptions.cs) except
+`db.row-lock.v1` and `db.decimal.numeric.v1`. This includes `db.query.v1`,
+transactions/savepoints, streaming, migrations, schema reading, relations and
+`db.decimal.text.v1`. The actual advertised mask is composed by the
+[native query profile](../../native/database/host/src/query.rs) and
+[Host bootstrap](../../native/database/host/src/abi.rs). The private B03 component's
+`db.sqlite.profile.v1` bootstrap remains a component-test input; it is not the public
+provider descriptor or the packaged Database Host.
+
+The maintainer source project defaults to
+`target/release/libnw_database_sqlite.so`, hashes that actual file, and generates
+the immutable profile and output record under `obj`. Its ordinary/AOT outputs copy
+the asset to `runtimes/linux-x64/native/libnw_database_sqlite.so`. A maintainer can
+supply `NativeWeaveSqliteAssetPath`, `NativeWeaveSqliteRuntimeIdentifier`, and
+`NativeWeaveSqliteAssetName` as explicit existing-asset inputs. Missing input is a
+build error. Consumer MSBuild never invokes Cargo. Candidate NuGet native-leaf
+selection and the actual SDK publish layout are checked separately by the
+[package consumer gates](packaging-domain.md).
+
+The current compiled inventory contains **32** exact symbols, including these
+existing composition declarations:
+
+| Public declaration | Implemented behavior |
+| --- | --- |
+| `SqliteDataSource.Create(string path, Action<SqliteOptions>? configure = null) : DataSource` | Snapshots options, selects the SQLite Host and calls `Build` with default source limits |
+| `DataSourceBuilder.UseSqlite(string path, Action<SqliteOptions>? configure = null) : DataSourceBuilder` | Snapshots options and provider selection on the supplied single-writer builder, without native I/O |
+| `SqliteDataSourceBuilderExtensions` | Declares the existing `UseSqlite` extension |
+
+`src/Data.Sqlite/host-composition.expected.json` preserves the original ownership
+of those three declarations; they are also included in the integrated
+`public-api.expected.json` and [compiled API reference](../../src/Data.Sqlite/api-reference.md).
+The builder supports explicit source limits before `Build`; SQLite private-memory
+sources require `MaxConnections = 1`. These are existing compiled factories, and
+their tests do not execute design stubs.
 
 ## Profile and limits
 
@@ -200,20 +232,28 @@ If SQLx fails to establish a close acknowledgement, B05's retirement future does
 not claim safe release; it retains the transaction's cleanup evidence/budget. Host
 shutdown must keep the runtime alive until its cleanup ledger is resolved.
 
-## Actual component verification
+## Host preflight and retained component verification
 
-Run the repository's existing integration gates after composition. For this
-component's Linux x64 evidence, the dedicated verifier is:
+Build the actual SQLite Database Host with the repository's maintainer build first.
+For Linux x64 provider preflight and component evidence, run the dedicated verifier
+from a clean committed checkout against the pinned Design snapshot:
 
 ```sh
 python3 tests/Data.Sqlite/verify.py --design /path/to/locked/NativeWeave-Design
 ```
 
-The maintainer verifier builds the native component first, restores with separate
-ordinary/AOT lock files in locked mode, and compiles the exact API/XML/reference.
-It executes a test-only ABI fixture in JIT and an actual `linux-x64` Native AOT
-executable. The fixture explicitly creates one test runtime per suite; it is not a
-product synchronous host wrapper and is not distributed as a Database engine.
+The maintainer verifier separately builds the private native component and its
+test-only ABI fixture. Managed builds consume the prebuilt complete Host asset,
+restore with separate ordinary/AOT lock files in locked mode, and verify the exact
+**32-symbol** API/XML/reference. Public preflight checks the actual Host engine ID,
+capability set, bootstrap, native hash and cached inspection, including that
+inspection creates no Host runtime or live owners. The private component bootstrap
+is checked independently.
+
+The component suite executes through its test-only ABI in JIT and an actual
+`linux-x64` Native AOT executable. The fixture explicitly creates one test runtime
+per suite; it is not a product synchronous host wrapper and is not distributed as
+a Database engine. Host preflight and component execution remain distinct evidence.
 
 The fourteen scenario groups exercise actual pinned SQLite product paths: every
 physical profile, private memory isolation, B07 typed parameters/NULL, FK failure
@@ -228,9 +268,15 @@ SQLx's public tracked `BEGIN IMMEDIATE` outer transaction; they do not implement
 claim B08's migration administration API.
 
 The result file binds source/lock/features, selected upstream source files,
-toolchain/native/assembly/executable hashes, generated asset profile/output record,
-and raw command stdout/stderr. It checks unchanged source bytes after execution.
-Only Linux x64 is accepted here. Full assembled B04 host, pristine no-Rust NuGet
-consumption, other platforms, performance and long-load acceptance remain with
-their documented owners; this component makes no measured speed or RSS advantage
-claim.
+toolchain/assembly/executable hashes, separate private-component and complete-Host
+native identities, the generated asset profile/output record, and raw command
+stdout/stderr. It verifies that the ordinary and AOT Host output records and copied
+files match the staged Host hash, and checks unchanged source bytes after execution.
+
+These fourteen component groups retain their unique provider assertions. Their
+runtime results do not establish complete Host query execution or ordinary NuGet
+consumption. The [repository verification gate](../verification.md) separately
+exercises the assembled database APIs and out-of-tree PackageReference consumers,
+including typed Fluent/DTO results in JIT and Native AOT and no-Rust consumption.
+This scope targets Linux x64. No other-platform, measured speed, RSS or long-load
+acceptance follows from these component tests.

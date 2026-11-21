@@ -1,6 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
+    <TargetFramework>net11.0</TargetFramework><LangVersion>15.0</LangVersion>
+    <Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <AssemblyName>NativeWeave.Reference.TaskService</AssemblyName>
     <RootNamespace>NativeWeave.Reference.TaskService</RootNamespace>
     <IsAotCompatible>true</IsAotCompatible>
@@ -10,9 +15,8 @@
     <NuGetLockFilePath Condition="'$(PublishAot)' == 'true' and '$(RuntimeIdentifier)' != ''">$(MSBuildProjectDirectory)/packages.$(RuntimeIdentifier).aot.lock.json</NuGetLockFilePath>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="NativeWeave.Database.Sqlite" Version="$(NativeWeavePackageVersion)" />
-    <PackageReference Include="NativeWeave.Database.PostgreSql" Version="$(NativeWeavePackageVersion)" />
-    <PackageReference Include="NativeWeave.Server" Version="$(NativeWeavePackageVersion)" />
+    <PackageReference Include="NativeWeave.Database.Sqlite" Version="[$(NativeWeavePackageVersion)]" />
+    <PackageReference Include="NativeWeave.Database.PostgreSql" Version="[$(NativeWeavePackageVersion)]" />
     <EmbeddedResource Include="Migrations/*.sql" />
   </ItemGroup>
 </Project>

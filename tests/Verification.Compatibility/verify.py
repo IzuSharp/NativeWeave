@@ -13,12 +13,7 @@ import tempfile
 import time
 import zipfile
 
-from test_policy import ROOT, compat, record, released_packages, run as policy_cases, write
-
-PINNED_PACKAGES = {
-    "0.1.0-preview.5.1": "31e9a7714f203c7d37c7c2fe7d6f4922e6a9c677f328ce305dcb736c1daacf01",
-    "0.1.0-preview.6.1": "a485dd55b2a6415b697386c9dc6b5dbd747619e24bba6dda87bfe1ec1c30780b",
-}
+from test_policy import ROOT, compat, record, run as policy_cases, write
 
 
 def main():
@@ -26,7 +21,6 @@ def main():
     parser.add_argument("--evidence", type=Path, required=True)
     parser.add_argument("--api-tool-root", type=Path, default=ROOT)
     parser.add_argument("--design-root", type=Path)
-    parser.add_argument("--downloads", type=Path)
     parser.add_argument("--prepare", action="store_true")
     args = parser.parse_args()
     evidence = args.evidence.resolve()
@@ -218,28 +212,18 @@ def main():
         write(evidence / "matrix.json", matrix_record)
         policies = policy_cases(ROOT, evidence, managed["old"], managed["new"], natives["old"], natives["new"],
                                 evidence / "core-reference.json", evidence / "core-reference.json", {"source_commit": source_commit})
-        downloads = args.downloads.resolve() if args.downloads else evidence / "downloads"
-        downloads.mkdir(parents=True, exist_ok=True)
-        for version, expected_hash in PINNED_PACKAGES.items():
-            package = downloads / f"nativeweave.helloworld.{version}.nupkg"
-            if not package.exists():
-                run(f"download-{version}", ["curl", "--connect-timeout", "10", "--max-time", "60", "-fsSL",
-                    f"https://api.nuget.org/v3-flatcontainer/nativeweave.helloworld/{version}/{package.name}", "-o", package])
-            assert compat.file_hash(package) == expected_hash, "The previously observed immutable package changed"
-        release_records, signature_cases = released_packages(evidence, downloads)
         closure_cases = local_closure(run, evidence, common)
-        published_consumers(run, evidence, downloads, common, release_records)
         for path in [ROOT / "Cargo.lock", fixture_source, sample.parent / "Program.cs", core_dll,
-                     *api_snapshots.values(), *(downloads / f"nativeweave.helloworld.{version}.nupkg" for version in PINNED_PACKAGES)]:
+                     *api_snapshots.values()]:
             hashes[str(path.relative_to(ROOT))] = {"sha256": compat.file_hash(path)}
         final_status = subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True)
         final_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
         result = {"passed": True, "prepare_only": args.prepare, "source_commit": source_commit,
             "source_dirty": bool(initial_status), "source_stable": initial_status == final_status and source_commit == final_commit,
-            "platform": "linux-x64", "matrix_rows": len(matrix), "policy_cases": len(policies), "signature_cases": len(signature_cases),
+            "platform": "linux-x64", "matrix_rows": len(matrix), "policy_cases": len(policies),
             "local_closure_cases": closure_cases, "commands": len(commands), "artifact_hashes": hashes,
             "a13_tool": api_tool_inputs,
-            "seconds": round(time.time()-started, 3), "scope": "A22 component compatibility and existing bootstrap release evolution, not all-platform/full Engine acceptance"}
+            "seconds": round(time.time()-started, 3), "scope": "Retained Core ABI/API compatibility; database package release identity and signature rejection are exercised by Packaging.Domain"}
         assert args.prepare or result["source_stable"]
         write(evidence / "result.json", result)
         print(json.dumps(result, indent=2))
@@ -318,29 +302,6 @@ def local_closure(run, evidence, common):
         cases.append({"name": "bare-minimum-edge", "hard_rejection": str(error)})
     write(evidence / "local-closure-cases.json", {"scope": "Unsigned local graph fixtures; cryptographic acceptance is separate", "cases": cases})
     return len(cases)
-
-
-def published_consumers(run, evidence, downloads, common, records):
-    """Existing signed releases in fresh processes; no Rust invocation in consumers."""
-    project = Path(tempfile.mkdtemp(prefix="nativeweave-a22-released-consumer-"))
-    policy = compat.read_json(ROOT / "tests/Verification.Compatibility/signature-policy.json")
-    config = project / "NuGet.Config"
-    config.write_text(f'<configuration><packageSources><clear/><add key="accepted-local-closure" value="{downloads}"/></packageSources><packageSourceMapping><clear/><packageSource key="accepted-local-closure"><package pattern="NativeWeave.HelloWorld"/></packageSource></packageSourceMapping><config><add key="signatureValidationMode" value="require"/></config><trustedSigners><clear/><repository name="accepted-nuget-org" serviceIndex="{policy["service_index"]}"><certificate fingerprint="{policy["certificate_sha256"]}" hashAlgorithm="SHA256" allowUntrustedRoot="false"/><owners>{";".join(policy["owners"])}</owners></repository></trustedSigners></configuration>')
-    (project / "Program.cs").write_text('using NativeWeave.HelloWorld;\nif (RustGreeting.Greet("Compatibility") != "Hello, Compatibility! From Rust.") throw new System.Exception("Released behavior changed");\nSystem.Console.WriteLine("Released closure consumer passed");\n')
-    # Catalog exclusion models local adoption state only; no real package is unlisted.
-    write(evidence / "controlled-catalog.json", {"scope": "Local unlist behavior fixture; no registry mutation", "advertised": ["0.1.0-preview.6.1"]})
-    for version in ("0.1.0-preview.5.1", "0.1.0-preview.6.1", "0.1.0-preview.5.1"):
-        stage = "rollback" if version == "0.1.0-preview.5.1" and (project / "already-old").exists() else version
-        (project / "Consumer.csproj").write_text(f'<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><TargetFramework>net11.0</TargetFramework><OutputType>Exe</OutputType><TreatWarningsAsErrors>true</TreatWarningsAsErrors></PropertyGroup><ItemGroup><PackageReference Include="NativeWeave.HelloWorld" Version="[{version}]" /></ItemGroup></Project>')
-        run(f"released-{stage}-restore", ["dotnet", "restore", project / "Consumer.csproj", "--configfile", config,
-            "--packages", project / "isolated-packages", "--force", "-p:NuGetAudit=false", *common], cwd=project)
-        assets = compat.read_json(project / "obj/project.assets.json")
-        compat.validate_closure(records[version], {"NativeWeave.HelloWorld": downloads / f"nativeweave.helloworld.{version}.nupkg"}, assets)
-        output = evidence / "released-consumers" / stage
-        run(f"released-{stage}-build", ["dotnet", "build", project / "Consumer.csproj", "--no-restore", "-c", "Release", "-o", output, *common], cwd=project)
-        run(f"released-{stage}-run", ["dotnet", output / "Consumer.dll"], cwd=project, contains=("consumer passed",))
-        (project / "already-old").touch()
-    write(evidence / "released-consumer.json", {"temporary_project": str(project), "scope": "Signed existing HelloWorld preview.5.1 → preview.6.1 → preview.5.1 in fresh processes; catalog exclusion does not remove exact-version/cache access"})
 
 
 if __name__ == "__main__":

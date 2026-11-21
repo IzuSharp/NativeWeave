@@ -56,6 +56,7 @@ static void initialize(void) {
     if (value && !strcmp(value, "enospc")) mode = 1;
     if (value && !strcmp(value, "after-sync")) mode = 2;
     if (value && !strcmp(value, "after-unlink")) mode = 3;
+    if (value && !strcmp(value, "after-staging-write")) mode = 4;
     if (!target[0] || !arm_path[0] || !audit_path[0]) mode = 0;
     inside--;
 }
@@ -92,6 +93,9 @@ static int descriptor_matches(int descriptor) {
     ssize_t count = readlink(link, filename, PATH_MAX);
     if (count < 0 || count >= PATH_MAX) return 0;
     filename[count] = 0;
+    size_t target_length = strlen(target), filename_length = strlen(filename);
+    if (mode == 4 && target_length && target[target_length - 1] == '/')
+        return !strncmp(filename, target, target_length) && filename_length >= 5 && !strcmp(filename + filename_length - 5, ".part");
     return !strcmp(filename, target);
 }
 
@@ -99,6 +103,9 @@ static int unlink_matches(const char *filename) {
     size_t length = strlen(target);
     if (length && target[length - 1] == '/')
         return !strncmp(filename, target, length) && filename[length] && !strchr(filename + length, '/');
+    size_t target_length = strlen(target), filename_length = strlen(filename);
+    if (mode == 4 && target_length && target[target_length - 1] == '/')
+        return !strncmp(filename, target, target_length) && filename_length >= 5 && !strcmp(filename + filename_length - 5, ".part");
     return !strcmp(filename, target);
 }
 
@@ -127,28 +134,40 @@ ssize_t write(int descriptor, const void *buffer, size_t length) {
     if (inside) return syscall(SYS_write, descriptor, buffer, length);
     pthread_once(&initialized, initialize);
     if (fail_write(descriptor, "write")) return -1;
-    return next_write ? next_write(descriptor, buffer, length) : syscall(SYS_write, descriptor, buffer, length);
+    ssize_t result = next_write ? next_write(descriptor, buffer, length) : syscall(SYS_write, descriptor, buffer, length);
+    int error = errno;
+    if (result > 0 && mode == 4 && descriptor_matches(descriptor) && choose()) barrier("write", descriptor);
+    errno = error; return result;
 }
 
 ssize_t pwrite(int descriptor, const void *buffer, size_t length, off_t offset) {
     if (inside) return syscall(SYS_pwrite64, descriptor, buffer, length, offset);
     pthread_once(&initialized, initialize);
     if (fail_write(descriptor, "pwrite")) return -1;
-    return next_pwrite ? next_pwrite(descriptor, buffer, length, offset) : syscall(SYS_pwrite64, descriptor, buffer, length, offset);
+    ssize_t result = next_pwrite ? next_pwrite(descriptor, buffer, length, offset) : syscall(SYS_pwrite64, descriptor, buffer, length, offset);
+    int error = errno;
+    if (result > 0 && mode == 4 && descriptor_matches(descriptor) && choose()) barrier("pwrite", descriptor);
+    errno = error; return result;
 }
 
 ssize_t pwrite64(int descriptor, const void *buffer, size_t length, off64_t offset) {
     if (inside) return syscall(SYS_pwrite64, descriptor, buffer, length, offset);
     pthread_once(&initialized, initialize);
     if (fail_write(descriptor, "pwrite64")) return -1;
-    return next_pwrite64 ? next_pwrite64(descriptor, buffer, length, offset) : syscall(SYS_pwrite64, descriptor, buffer, length, offset);
+    ssize_t result = next_pwrite64 ? next_pwrite64(descriptor, buffer, length, offset) : syscall(SYS_pwrite64, descriptor, buffer, length, offset);
+    int error = errno;
+    if (result > 0 && mode == 4 && descriptor_matches(descriptor) && choose()) barrier("pwrite64", descriptor);
+    errno = error; return result;
 }
 
 ssize_t writev(int descriptor, const struct iovec *buffers, int count) {
     if (inside) return syscall(SYS_writev, descriptor, buffers, count);
     pthread_once(&initialized, initialize);
     if (fail_write(descriptor, "writev")) return -1;
-    return next_writev ? next_writev(descriptor, buffers, count) : syscall(SYS_writev, descriptor, buffers, count);
+    ssize_t result = next_writev ? next_writev(descriptor, buffers, count) : syscall(SYS_writev, descriptor, buffers, count);
+    int error = errno;
+    if (result > 0 && mode == 4 && descriptor_matches(descriptor) && choose()) barrier("writev", descriptor);
+    errno = error; return result;
 }
 
 int fsync(int descriptor) {

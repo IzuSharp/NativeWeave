@@ -1,29 +1,31 @@
 {
-  "schemaVersion": 1,
-  "task": "B22",
+  "schemaVersion": 2,
+  "task": "DB-Scope-01",
   "platform": "linux-x64",
-  "designCommit": "c62cdb8aee833b6ab1a03e29a3f59f81a1b483f9",
-  "startDependency": "B21",
-  "ordinaryReferenceCoverage": "Reuse accepted B21 evidence only at its executed application/package/native identities; this file is not an execution receipt.",
+  "modes": ["jit", "aot"],
+  "providers": ["sqlite", "postgresql"],
+  "driver": "tests/Reference.TaskService/package_probe.py",
+  "acceptance": "Every selected package row executes its direct application checks and every finite database fault case for its provider. A missing, failed, unavailable or interrupted case is not a pass.",
   "faultGroups": [
-    {"id":"pg-boundaries","cases":["begin-transport-loss","write-transport-loss","commit-held-before-upstream-send","commit-acknowledgement-discarded","failed-transaction","provider-drain-failure","postgres-restart"],"providers":["postgresql"],"modes":["jit","aot"]},
-    {"id":"sqlite-boundaries","cases":["sqlite-busy","sqlite-write-enospc"],"providers":["sqlite"],"modes":["jit","aot"]},
-    {"id":"business-crashes","cases":["outbox-after-publication-before-ack","upload-before-durable-content","upload-after-rename-before-commit","orphan-collection-interrupted","service-restart-recovery"],"providers":["sqlite","postgresql"],"modes":["jit","aot"]},
-    {"id":"network","cases":["slow-upload","slow-download","http1-half-close","http2-reset","shutdown-during-admitted-work"],"providers":["sqlite","postgresql"],"modes":["jit","aot"]},
-    {"id":"public-composition","owner":"ApiProbe","cases":["commit-pre-admission-cancellation","early-database-stream-exit","nullable-foreign-key-query","automatic-http-completion","retained-chunk-after-eof","pending-close-then-dispose-join","request-and-global-immediate-resource-limit","late-cancellation-and-old-send-obligation","grpc-binary-metadata-and-route-restrictions","optional-protocol-limits"]},
-    {"id":"retention-and-authority","cases":["protected-unknown-recovery","outbox-protected-retention","expired-key","tenant-and-principal-isolation","tampered-cursor"],"ordinaryEvidence":"Accepted B21 fixed oracle rows; new fault cases additionally reconcile protected outcomes after interruption."}
+    {"id":"postgresql","cases":["begin-transport-loss","write-transport-loss","commit-held-before-upstream-send","commit-acknowledgement-discarded","provider-drain-failure","postgres-restart"]},
+    {"id":"sqlite","cases":["sqlite-busy","sqlite-write-enospc"]},
+    {"id":"shared-database-application","cases":["outbox-after-publication-before-ack","upload-before-durable-content","upload-after-rename-before-commit","orphan-collection-interrupted"]}
   ],
-  "requiredStages": [
-    {"id":"steady-30m","requiredSeconds":1800,"status":"not-run"},
-    {"id":"regression-24h","requiredSeconds":86400,"status":"not-run"},
-    {"id":"release-72h","requiredSeconds":259200,"status":"not-run"}
-  ],
-  "resourceObservationPolicy": {
-    "databaseNativeOwners":"Existing nw_db_diagnostic_count_v1 kinds0..5 from the exact already-loaded provider module.",
-    "serverPermitsAndPayload":"Public MeterListener on NativeWeave.Server; its source snapshot is cached for1second.",
-    "managedRoots":"Require an actual supported runtime observation and positive controls; unavailable is never reported as zero.",
-    "process":"Linux procfs RSS, threads, file descriptors and CPU; RSS is not a native allocator or ownership counter.",
-    "quiescence":"Source/host closure, byte-owner release and managed/native retirement are distinct from response EOF, cancellation and process exit."
+  "apiComposition": {
+    "driver": "tests/Verification.EndToEnd/api_probe.py",
+    "requiredCases": "src/Verification.EndToEnd/ApiProbe/required-cases.json",
+    "scope": "Actual cancellation, rollback, same PostgreSQL physical session, stream admission and early release, nullable composite relation, source/session cleanup, weak-reference release and native database owner counters."
   },
-  "measurementPolicy": "Freeze workload, artifact hashes, duration, actual baseline-derived thresholds, seed and fault schedule before each long stage. Do not overlap fault/stress runs with B23 timed measurements. Preserve incomplete attempts and never promote shorter runs to longer-stage acceptance."
+  "referenceComposition": {
+    "driver": "tests/Reference.TaskService/run.py",
+    "scope": "Explicit migrations, static model/DTO mapping, typed CRUD/keyset queries, scoped idempotency, optimistic attachment changes, durable recovery, outbox deduplication, retention and protected filesystem references."
+  },
+  "postgresqlIndependentOracles": ["actual-lock-wait-before-conflict-resolution", "zero-row-insert-followed-by-new-select-snapshot", "commit-and-idle-acknowledgment-discard", "durable-single-operation-item-outbox", "identity-bound-recovery-and-replay"],
+  "resourceObservationPolicy": {
+    "databaseNativeOwners": "nw_db_diagnostic_count_v1 kinds 0 through 5 from each selected provider module in ApiProbe.",
+    "managedRoots": "Explicit weak-reference and cleanup witnesses; no claim of a total GCHandle or root counter.",
+    "faultMechanism": "Only disposable verification processes and database traffic are faulted; packaged native assets are immutable."
+  },
+  "historicalEvidence": "Earlier B21/B22 records remain historical at their original commits. NativeWeave server/protocol checks and timed workloads have no current execution entry.",
+  "performanceMeasurement": false
 }

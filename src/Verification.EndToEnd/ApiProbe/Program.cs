@@ -1,22 +1,17 @@
 using System.Diagnostics;
-using System.Net;
-using System.Net.Security;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.Extensions.DependencyInjection;
 using NativeWeave.Data;
 using NativeWeave.Database;
 using NativeWeave.Database.PostgreSql;
 using NativeWeave.Database.Sqlite;
-using NativeWeave.Server;
 
 namespace NativeWeave.Verification.EndToEnd;
 
 internal sealed record ProbeConfig(string Provider, string Database, string OutputDirectory,
-    string TlsCertificatePem, string TlsPrivateKeyPem, bool AllowLocalDatabaseTlsDisable = false);
+    bool AllowLocalDatabaseTlsDisable = false);
 internal sealed record CaseReceipt(string Id, string Status, Dictionary<string, string> Observations);
 internal sealed record ProbeReceipt(int SchemaVersion, string Task, string Provider, bool DynamicCodeSupported,
     string StartedUtc, string EndedUtc, List<CaseReceipt> Cases, List<string> Failures,
@@ -26,7 +21,7 @@ internal sealed record ProbeReceipt(int SchemaVersion, string Task, string Provi
 [JsonSerializable(typeof(ProbeConfig)), JsonSerializable(typeof(ProbeReceipt))]
 internal partial class ReceiptJson : JsonSerializerContext;
 
-/// <summary>Actual packed public API composition; no private test hook or managed host substitute.</summary>
+/// <summary>Direct database composition through ordinary packages; no application server is involved.</summary>
 internal static partial class Probe
 {
     private static readonly List<CaseReceipt> Cases = [];
@@ -42,33 +37,26 @@ internal static partial class Probe
             ?? throw new ArgumentException("Missing probe configuration.");
         if (Config.Provider is not ("sqlite" or "postgresql")) throw new ArgumentException("Unknown provider.");
         Directory.CreateDirectory(Config.OutputDirectory);
-        Console.WriteLine("B22_API_RUNTIME dynamic=" + RuntimeFeature.IsDynamicCodeSupported);
+        Console.WriteLine("DATABASE_API_RUNTIME dynamic=" + RuntimeFeature.IsDynamicCodeSupported);
         try
         {
             await DatabaseCases();
-            await HttpComposition();
-            await RetainedChunk();
-            await CreditExhaustion(false);
-            await CreditExhaustion(true);
-            await ProtocolComposition();
-            await McpPressure(false);
-            await McpPressure(true);
         }
         catch (Exception failure)
         {
             Failures.Add(failure.GetType().Name + ":" + failure.Message);
-            Console.Error.WriteLine("B22_API_FAILED " + failure.GetType().Name + ":" + failure.Message);
+            Console.Error.WriteLine("DATABASE_API_FAILED " + failure.GetType().Name + ":" + failure.Message);
             Console.Error.WriteLine(failure);
         }
         var owners = NativeCounts();
         try { Check("final-native-database-owners-zero", owners.Count == 2 && owners.Values.All(values => values.All(value => value == 0))); }
         catch (Exception failure) { Failures.Add(failure.Message); }
-        var receipt = new ProbeReceipt(1, "B22", Config.Provider, RuntimeFeature.IsDynamicCodeSupported, started,
+        var receipt = new ProbeReceipt(1, "DB-Scope-01", Config.Provider, RuntimeFeature.IsDynamicCodeSupported, started,
             DateTimeOffset.UtcNow.ToString("O"), Cases, Failures, owners,
             "Explicit weak-reference and scoped-disposal witnesses only; this executable does not claim a total managed GCHandle/root counter.");
         await File.WriteAllTextAsync(Path.Combine(Config.OutputDirectory, "receipt.json"),
             JsonSerializer.Serialize(receipt, ReceiptJson.Default.ProbeReceipt));
-        Console.WriteLine("B22_API_RESULT cases=" + Cases.Count + " failures=" + Failures.Count);
+        Console.WriteLine("DATABASE_API_RESULT cases=" + Cases.Count + " failures=" + Failures.Count);
         return Failures.Count == 0 ? 0 : 1;
     }
 
@@ -103,37 +91,6 @@ internal static partial class Probe
             MaxBufferedRows = 64, CommandTimeout = TimeSpan.FromSeconds(10) }).Build();
     }
 
-    internal static NativeServerBuilder Builder()
-    {
-        var builder = NativeServer.CreateBuilder();
-        builder.Options.RequestTimeout = TimeSpan.FromSeconds(15);
-        builder.Options.ShutdownTimeout = TimeSpan.FromMilliseconds(100);
-        builder.Listen(IPAddress.Loopback, 0, options =>
-        {
-            options.Protocols = ServerProtocols.Http1AndHttp2;
-            options.Tls = ServerTlsOptions.FromPemFiles(Config.TlsCertificatePem, Config.TlsPrivateKeyPem);
-        });
-        return builder;
-    }
-
-    internal static HttpClient Client(NativeServerApplication app, Version? version = null)
-    {
-        using var expected = X509Certificate2.CreateFromPem(File.ReadAllText(Config.TlsCertificatePem));
-        string thumbprint = expected.Thumbprint;
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback = (_, certificate, _, errors) => certificate is not null
-                && certificate.Thumbprint == thumbprint && (errors & SslPolicyErrors.RemoteCertificateNameMismatch) == 0
-        };
-        return new(handler) { BaseAddress = app.BoundAddresses.Single(), DefaultRequestVersion = version ?? HttpVersion.Version20,
-            DefaultVersionPolicy = HttpVersionPolicy.RequestVersionExact, Timeout = TimeSpan.FromSeconds(20) };
-    }
-
-    internal static void Closed(string id, ServerCloseResult close) => Check(id,
-        close.Status == ServerCloseStatus.Completed && close.PendingRequests == 0
-        && close.RetainedManagedBytes == 0 && close.RetainedNativeBytes == 0,
-        ("status", close.Status), ("pending", close.PendingRequests), ("managed", close.RetainedManagedBytes), ("native", close.RetainedNativeBytes));
-
     private static unsafe Dictionary<string, ulong[]> NativeCounts()
     {
         var result = new Dictionary<string, ulong[]>();
@@ -153,11 +110,4 @@ internal static partial class Probe
         }
         return result;
     }
-}
-
-internal sealed class ScopeWitness : IDisposable
-{
-    internal static int Created, Disposed;
-    internal ScopeWitness() => Interlocked.Increment(ref Created);
-    public void Dispose() => Interlocked.Increment(ref Disposed);
 }

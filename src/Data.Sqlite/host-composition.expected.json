@@ -1,7 +1,7 @@
 {
   "design_commit": "c62cdb8aee833b6ab1a03e29a3f59f81a1b483f9",
   "owner": "B04",
-  "applicability": "Exact facade composition depends on DataSource/DataSourceBuilder owned by B04; B03 native/component acceptance is explicitly independent under the packet DAG rationale. These symbols are not implemented by this component and are not counted as compiled product API.",
+  "applicability": "Historical B03/B04 ownership slice, preserved with its original Design signatures. The integrated provider assembly already implements these factories and builder extensions through Data.NativeHost; public-api.expected.json now includes them in its exact compiled surface. Historical component execution remains distinct from full database host acceptance.",
   "symbols": [
     {
       "id": "M:NativeWeave.Database.Sqlite.SqliteDataSource.Create(System.String,System.Action{NativeWeave.Database.Sqlite.SqliteOptions})",

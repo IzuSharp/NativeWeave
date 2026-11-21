@@ -60,6 +60,17 @@ internal static partial class Probe
         await session.InsertAsync(Relations.Parents, new Parent(7, 1));
         foreach (var child in new[] { new Child(1, 7, 1), new Child(2, null, null), new Child(3, 7, null), new Child(4, null, 1) })
             await session.InsertAsync(Relations.Children, child);
+        // These assertions were previously hidden inside a NativeWeave HTTP handler.
+        // The same typed business query now executes directly in this ordinary C# consumer.
+        var related = await session.LoadRelatedAsync(Relations.Parents.Key(Relations.Tenant, 7L).And(Relations.Id, 1L), Relations.Optional);
+        using (var query = session.From(Relations.Children))
+        using (var nullEquality = session.From(Relations.Children))
+        {
+            var missing = await query.WhereIsNull(Relations.ChildTenant).OrderBy(Relations.ChildId).SelectAll().ToListAsync();
+            long equalNull = await nullEquality.WhereEqual(Relations.ChildTenant, (long?)null).CountAsync();
+            string actual = string.Join(',', related.Select(item => item.Id)) + "|" + string.Join(',', missing.Select(item => item.Id)) + "|" + equalNull;
+            Check("nullable-composite-foreign-key-direct-query", actual == "1|2,4|0", ("actual", actual));
+        }
         await session.DisposeAsync();
         Check("public-session-safe-retirement", session.Cleanup.LocalResourcesReleased);
         var close = await source.CloseAsync(TimeSpan.FromSeconds(2));

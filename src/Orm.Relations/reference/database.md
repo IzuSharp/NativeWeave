@@ -60,7 +60,7 @@ NativeWeave.Query.FrameBoundary.CurrentRow = 1
 
 **summary:** Uses the native CurrentRow policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Only these ROWS endpoints are supported. Reversed or unsupported bounds fail before native state publication; finite numeric PRECEDING/FOLLOWING frames are not declared.
 
@@ -72,7 +72,7 @@ NativeWeave.Query.FrameBoundary.UnboundedFollowing = 2
 
 **summary:** Uses the native UnboundedFollowing policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Only these ROWS endpoints are supported. Reversed or unsupported bounds fail before native state publication; finite numeric PRECEDING/FOLLOWING frames are not declared.
 
@@ -84,7 +84,7 @@ NativeWeave.Query.FrameBoundary.UnboundedPreceding = 0
 
 **summary:** Uses the native UnboundedPreceding policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Only these ROWS endpoints are supported. Reversed or unsupported bounds fail before native state publication; finite numeric PRECEDING/FOLLOWING frames are not declared.
 
@@ -96,7 +96,7 @@ NativeWeave.Query.LockWait.NoWait = 1
 
 **summary:** Uses the native NoWait policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Controls PostgreSQL row-lock conflicts within the same transaction and total query deadline; it does not enable transparent retries.
 
@@ -108,7 +108,7 @@ NativeWeave.Query.LockWait.SkipLocked = 2
 
 **summary:** Uses the native SkipLocked policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Controls PostgreSQL row-lock conflicts within the same transaction and total query deadline; it does not enable transparent retries.
 
@@ -120,7 +120,7 @@ NativeWeave.Query.LockWait.Wait = 0
 
 **summary:** Uses the native Wait policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Controls PostgreSQL row-lock conflicts within the same transaction and total query deadline; it does not enable transparent retries.
 
@@ -132,7 +132,7 @@ NativeWeave.Query.NullOrder.First = 0
 
 **summary:** Uses the native First policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Both providers render explicit SQL NULL placement. Ordering alone supplies no uniqueness or snapshot guarantee.
 
@@ -144,7 +144,7 @@ NativeWeave.Query.NullOrder.Last = 1
 
 **summary:** Uses the native Last policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Both providers render explicit SQL NULL placement. Ordering alone supplies no uniqueness or snapshot guarantee.
 
@@ -156,7 +156,7 @@ NativeWeave.Query.RowLockMode.KeyShare = 3
 
 **summary:** Uses the native KeyShare policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Available only on PostgreSQL with an explicit live transaction. SQLite rejects the operation before provider dispatch.
 
@@ -168,7 +168,7 @@ NativeWeave.Query.RowLockMode.NoKeyUpdate = 2
 
 **summary:** Uses the native NoKeyUpdate policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Available only on PostgreSQL with an explicit live transaction. SQLite rejects the operation before provider dispatch.
 
@@ -180,7 +180,7 @@ NativeWeave.Query.RowLockMode.Share = 1
 
 **summary:** Uses the native Share policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Available only on PostgreSQL with an explicit live transaction. SQLite rejects the operation before provider dispatch.
 
@@ -192,7 +192,7 @@ NativeWeave.Query.RowLockMode.Update = 0
 
 **summary:** Uses the native Update policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Available only on PostgreSQL with an explicit live transaction. SQLite rejects the operation before provider dispatch.
 
@@ -204,7 +204,7 @@ NativeWeave.Query.SetOperation.Except = 3
 
 **summary:** Uses the native Except policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Operands must have the same source, field order, aliases, codecs and nullability. Rust snapshots the right operand; SQL duplicate and NULL semantics apply.
 
@@ -216,7 +216,7 @@ NativeWeave.Query.SetOperation.Intersect = 2
 
 **summary:** Uses the native Intersect policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Operands must have the same source, field order, aliases, codecs and nullability. Rust snapshots the right operand; SQL duplicate and NULL semantics apply.
 
@@ -228,7 +228,7 @@ NativeWeave.Query.SetOperation.Union = 0
 
 **summary:** Uses the native Union policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Operands must have the same source, field order, aliases, codecs and nullability. Rust snapshots the right operand; SQL duplicate and NULL semantics apply.
 
@@ -240,7 +240,7 @@ NativeWeave.Query.SetOperation.UnionAll = 1
 
 **summary:** Uses the native UnionAll policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Operands must have the same source, field order, aliases, codecs and nullability. Rust snapshots the right operand; SQL duplicate and NULL semantics apply.
 
@@ -252,7 +252,7 @@ NativeWeave.Query.SortDirection.Ascending = 0
 
 **summary:** Uses the native Ascending policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** The native query validates each enum value before mutation. Direction is explicit; it does not change SQL NULL ordering.
 
@@ -264,7 +264,7 @@ NativeWeave.Query.SortDirection.Descending = 1
 
 **summary:** Uses the native Descending policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** The native query validates each enum value before mutation. Direction is explicit; it does not change SQL NULL ordering.
 
@@ -2084,7 +2084,7 @@ public static NativeWeave.Query.CommonTable<T> NativeWeave.Query.CommonTable<T>.
 
 **summary:** Clones a native selected body into the declared shape; recursive mode requires a validated anchor/member UNION.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param declaredShape:** The static CTE row descriptor with an explicit logical table name and compatible fields.
 
@@ -2112,7 +2112,7 @@ public void NativeWeave.Query.CommonTable<T>.Dispose()
 
 **summary:** Prevents new CTE imports and releases this native snapshot reference.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** The snapshot is bound to one source and a declared static row shape. With imports a native retained reference. Disposal prevents new imports and does not mutate previously imported snapshots. Recursive creation requires one validated anchor/member self-reference.
 
@@ -2144,7 +2144,7 @@ public NativeWeave.Query.SqlExpression<T> NativeWeave.Query.JoinPredicate<TLeft,
 
 **summary:** Reads a root-table column during the synchronous ON callback.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -2170,7 +2170,7 @@ public NativeWeave.Query.SqlExpression<T> NativeWeave.Query.JoinPredicate<TLeft,
 
 **summary:** Reads a provisional joined column; the resulting ON token expires on commit or abort.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -2236,7 +2236,7 @@ public System.Collections.Generic.IAsyncEnumerable<T> NativeWeave.Query.Prepared
 
 **summary:** Snapshots exact parameter values now and creates one independent lazy native stream.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param session:** An open execution session belonging to this plan's exact source.
 
@@ -2268,7 +2268,7 @@ public void NativeWeave.Query.PreparedQuery<T>.Dispose()
 
 **summary:** Prevents new execution and releases this plan reference without cancelling accepted operations.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Concurrent execution uses separate sessions from the same source. Disposing prevents new dispatch; accepted native operations retain their plan independently and complete safely.
 
@@ -2280,7 +2280,7 @@ public System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<T>> 
 
 **summary:** Snapshots the exact declared parameter set before await and executes a bounded owned list.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param session:** An open execution session belonging to this plan's exact source.
 
@@ -2312,7 +2312,7 @@ public NativeWeave.Data.ResultColumn<TValue> NativeWeave.Query.ProjectionBuilder
 
 **summary:** Adds an exact same-query scalar and unique result alias, returning its projection token.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -2340,7 +2340,7 @@ public NativeWeave.Data.Projection<T> NativeWeave.Query.ProjectionBuilder<T>.Bui
 
 **summary:** Consumes the builder and freezes a direct AOT-visible materializer; it does not execute SQL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param materializer:** The statically compiled direct constructor or field reader; runtime reflection is not used.
 
@@ -2374,7 +2374,7 @@ public NativeWeave.Query.QueryParameters.QueryParameters()
 
 **summary:** Creates an empty explicit parameter set.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Set snapshots each encoded value before returning. A terminal copies the complete finite set before its first await; later Set calls do not change admitted execution. Missing, extra, foreign or codec-incompatible identities reject before native dispatch. No global parameter dictionary exists.
 
@@ -2386,7 +2386,7 @@ public NativeWeave.Query.QueryParameters NativeWeave.Query.QueryParameters.Set<T
 
 **summary:** Copies or replaces one typed parameter value; default or conflicting source identities reject.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param parameter:** The declared source-generation parameter identity with its exact typed codec.
 
@@ -2424,7 +2424,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.QueryRow<TEntity>.Equal<
 
 **summary:** Snapshots a typed value and creates native SQL equality.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -2452,7 +2452,7 @@ public NativeWeave.Query.SqlExpression<T> NativeWeave.Query.QueryRow<TEntity>.Ge
 
 **summary:** Creates an immediate native expression for an exact root-table column.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -2478,7 +2478,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.QueryRow<TEntity>.Greate
 
 **summary:** Snapshots a typed lower bound and creates a native comparison.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -2506,7 +2506,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.QueryRow<TEntity>.IsNotN
 
 **summary:** Tests the exact root column for SQL non-NULL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -2532,7 +2532,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.QueryRow<TEntity>.IsNull
 
 **summary:** Tests the exact root column for SQL NULL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -2568,7 +2568,7 @@ public System.Collections.Generic.IAsyncEnumerable<T> NativeWeave.Query.QuerySel
 
 **summary:** Seals synchronously and creates a one-shot bounded stream whose first MoveNext dispatches.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param cancellationToken:** Cancellation requests native stop; completion still waits for cursor and operation retirement.
 
@@ -2596,7 +2596,7 @@ public NativeWeave.Query.QuerySelection<T> NativeWeave.Query.QuerySelection<T>.C
 
 **summary:** Appends a native set operation using a frozen same-source selection; the other query remains mutable.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param other:** The compatible same-source selection or same-query expression required by this operation.
 
@@ -2622,7 +2622,7 @@ public System.Threading.Tasks.Task<T> NativeWeave.Query.QuerySelection<T>.FirstA
 
 **summary:** Reads at most one business row and retires the cursor; absence throws.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param cancellationToken:** Cancellation requests native stop; completion still waits for cursor and operation retirement.
 
@@ -2650,7 +2650,7 @@ public System.Threading.Tasks.Task<T?> NativeWeave.Query.QuerySelection<T>.First
 
 **summary:** Reads at most one business row, returning default(T) on absence.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param cancellationToken:** Cancellation requests native stop; completion still waits for cursor and operation retirement.
 
@@ -2678,7 +2678,7 @@ public NativeWeave.Query.PreparedQuery<T> NativeWeave.Query.QuerySelection<T>.Pr
 
 **summary:** Seals and transfers an immutable source-bound native plan for independent parameter snapshots.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **returns:** An independently disposable immutable native plan bound to this source.
 
@@ -2700,7 +2700,7 @@ public System.Threading.Tasks.Task<T> NativeWeave.Query.QuerySelection<T>.Single
 
 **summary:** Reads at most two business rows and requires exactly one, with cleanup on either cardinality failure.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param cancellationToken:** Cancellation requests native stop; completion still waits for cursor and operation retirement.
 
@@ -2728,7 +2728,7 @@ public System.Threading.Tasks.Task<T?> NativeWeave.Query.QuerySelection<T>.Singl
 
 **summary:** Requires at most one business row and returns default(T) when absent.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param cancellationToken:** Cancellation requests native stop; completion still waits for cursor and operation retirement.
 
@@ -2756,7 +2756,7 @@ public System.Threading.Tasks.Task<T[]> NativeWeave.Query.QuerySelection<T>.ToAr
 
 **summary:** Seals once and returns a bounded owned array after native cursor retirement.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param cancellationToken:** Cancellation requests native stop; completion still waits for cursor and operation retirement.
 
@@ -2784,7 +2784,7 @@ public System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<T>> 
 
 **summary:** Seals once and returns a bounded owned list after native cursor retirement.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param cancellationToken:** Cancellation requests native stop; completion still waits for cursor and operation retirement.
 
@@ -2812,7 +2812,7 @@ public string NativeWeave.Query.QuerySelection<T>.ToSql()
 
 **summary:** Renders a bounded native clone with placeholders and no parameter values; does not execute or seal.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **returns:** A bounded native SQL rendering with placeholders and no bound values.
 
@@ -2834,7 +2834,7 @@ public System.Threading.Tasks.Task<bool> NativeWeave.Query.Query<TEntity>.AnyAsy
 
 **summary:** Performs native EXISTS over the fully composed query.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param cancellationToken:** Cancellation requests native stop; completion still waits for cursor and operation retirement.
 
@@ -2862,7 +2862,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.Clone()
 
 **summary:** Creates an explicit deep native mutable clone; existing expression/alias proxies remain bound to this query.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **returns:** A new independently disposable native mutable clone; old proxies still belong to the old query.
 
@@ -2884,7 +2884,7 @@ public NativeWeave.Query.SqlExpression<T> NativeWeave.Query.Query<TEntity>.Colum
 
 **summary:** Creates an immediate root-column native scalar token.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -2910,7 +2910,7 @@ public NativeWeave.Query.SqlExpression<T> NativeWeave.Query.Query<TEntity>.Colum
 
 **summary:** Creates a scalar from an exact same-query inner-join alias and table.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param table:** The exact static table descriptor or same-query joined alias required by this overload.
 
@@ -2940,7 +2940,7 @@ public System.Threading.Tasks.Task<long> NativeWeave.Query.Query<TEntity>.CountA
 
 **summary:** Counts the fully composed native result without fetching DTOs into managed memory.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param cancellationToken:** Cancellation requests native stop; completion still waits for cursor and operation retirement.
 
@@ -2968,7 +2968,7 @@ public NativeWeave.Query.SqlExpression<long> NativeWeave.Query.Query<TEntity>.Co
 
 **summary:** Creates a native COUNT(*) aggregate with exact Int64 result metadata.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **returns:** A same-query borrowed native scalar token with exact typed codec and SQL nullability.
 
@@ -2990,7 +2990,7 @@ public System.Threading.Tasks.Task<long> NativeWeave.Query.Query<TEntity>.Delete
 
 **summary:** Executes a filtered native DELETE; missing filters and unsupported joined/grouped writes reject.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param cancellationToken:** Cancellation requests native stop; completion still waits for cursor and operation retirement.
 
@@ -3018,7 +3018,7 @@ public void NativeWeave.Query.Query<TEntity>.Dispose()
 
 **summary:** Closes query admission, requests any active cursor stop and releases the native arena reference.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Composition is synchronous and fail-fast on concurrent writers. The first terminal seals the query; use Clone before a second execution. Keep this owner alive across streaming and dispose after use.
 
@@ -3030,7 +3030,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.Distinc
 
 **summary:** Applies native SQL DISTINCT to the selected shape.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **returns:** This mutable query for further synchronous composition before its first terminal.
 
@@ -3052,7 +3052,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.Query<TEntity>.Exists<T>
 
 **summary:** Snapshots a same-source selection into a native EXISTS condition.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param subquery:** A current same-source selection whose native plan is cloned under admission.
 
@@ -3078,7 +3078,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.ForUpda
 
 **summary:** Applies an admitted PostgreSQL row lock; execution requires an explicit active transaction.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param mode:** The PostgreSQL row-lock strength; an explicit transaction is required.
 
@@ -3104,7 +3104,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.GroupBy
 
 **summary:** Appends a native grouping key.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -3130,7 +3130,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.Query<TEntity>.HasMatch<
 
 **summary:** Tests the native explicit LEFT JOIN match marker, independently from nullable child data.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param table:** The exact static table descriptor or same-query joined alias required by this overload.
 
@@ -3156,7 +3156,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.Having(
 
 **summary:** Appends a same-query native group predicate.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param predicate:** The compatible native condition or synchronous typed callback; callbacks are invoked at this call.
 
@@ -3180,7 +3180,7 @@ public NativeWeave.Query.JoinedTable<TJoin> NativeWeave.Query.Query<TEntity>.Inn
 
 **summary:** Reserves, builds and atomically commits an explicit native INNER JOIN ON clause.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param table:** The exact static table descriptor or same-query joined alias required by this overload.
 
@@ -3210,7 +3210,7 @@ public NativeWeave.Query.LeftJoinedTable<TJoin> NativeWeave.Query.Query<TEntity>
 
 **summary:** Commits a native LEFT JOIN and returns a nullable-only projected alias.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param table:** The exact static table descriptor or same-query joined alias required by this overload.
 
@@ -3240,7 +3240,7 @@ public NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.Query<TEntity>.Null
 
 **summary:** Reads a reference column through a LEFT JOIN with explicit nullable result metadata.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param table:** The exact static table descriptor or same-query joined alias required by this overload.
 
@@ -3270,7 +3270,7 @@ public NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.Query<TEntity>.Null
 
 **summary:** Preserves an already nullable value column through a LEFT JOIN.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param table:** The exact static table descriptor or same-query joined alias required by this overload.
 
@@ -3300,7 +3300,7 @@ public NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.Query<TEntity>.Null
 
 **summary:** Reads a non-null value column through a LEFT JOIN as an explicitly nullable scalar.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param table:** The exact static table descriptor or same-query joined alias required by this overload.
 
@@ -3330,7 +3330,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.OrderBy
 
 **summary:** Replaces native ordering with the exact root column and explicit NULL policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -3360,7 +3360,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.OrderBy
 
 **summary:** Replaces native ordering with the same-query expression and explicit NULL policy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -3390,7 +3390,7 @@ public NativeWeave.Query.SqlExpression<T> NativeWeave.Query.Query<TEntity>.Param
 
 **summary:** Creates a native reference to an identity already declared or imported into this query.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param parameter:** The declared source-generation parameter identity with its exact typed codec.
 
@@ -3416,7 +3416,7 @@ public NativeWeave.Query.QueryParameter<T> NativeWeave.Query.Query<TEntity>.Para
 
 **summary:** Allocates one nonrecycled source-generation parameter identity and declares it in this query.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param name:** The bounded exact parameter name; conflicting identities in composed plans reject.
 
@@ -3444,7 +3444,7 @@ public NativeWeave.Query.ProjectionBuilder<T> NativeWeave.Query.Query<TEntity>.P
 
 **summary:** Starts an explicit typed DTO projection in this query.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **typeparam T:** The statically known CLR value or owned result type with the exact declared codec/nullability.
 
@@ -3468,7 +3468,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.SeekAft
 
 **summary:** Appends strict keyset comparison for one non-null unique ascending root key.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param uniqueOrderKey:** The sole non-null primary key already ordered ascending, with no conflicting offset.
 
@@ -3496,7 +3496,7 @@ public NativeWeave.Query.QuerySelection<TEntity> NativeWeave.Query.Query<TEntity
 
 **summary:** Selects only root-table columns in the static entity constructor order.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **returns:** The borrowed current-selection view; its owning query retains the native arena.
 
@@ -3518,7 +3518,7 @@ public NativeWeave.Query.QuerySelection<T> NativeWeave.Query.Query<TEntity>.Sele
 
 **summary:** Selects a projection built by this exact query, or the root table's static row descriptor.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param projection:** The exact query-built projection or root table row descriptor to select.
 
@@ -3544,7 +3544,7 @@ public NativeWeave.Query.QuerySelection<T> NativeWeave.Query.Query<TEntity>.Sele
 
 **summary:** Selects one same-query native expression through its exact static codec.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -3570,7 +3570,7 @@ public NativeWeave.Query.QuerySelection<TOut> NativeWeave.Query.Query<TEntity>.S
 
 **summary:** Selects two native expressions into an AOT-visible direct DTO factory.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param first:** The first same-query native expression in result order.
 
@@ -3604,7 +3604,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.Skip(in
 
 **summary:** Sets a finite nonnegative offset only with known unique ordering.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param count:** The nonnegative bounded row count.
 
@@ -3628,7 +3628,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.Take(in
 
 **summary:** Sets a finite nonnegative native row limit; without order the selected rows are nondeterministic.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param count:** The nonnegative bounded row count.
 
@@ -3652,7 +3652,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.ThenBy<
 
 **summary:** Appends a root-column order after an existing order.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -3682,7 +3682,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.ThenBy<
 
 **summary:** Appends a same-query expression after an existing order.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -3712,7 +3712,7 @@ public System.Threading.Tasks.Task<long> NativeWeave.Query.Query<TEntity>.Update
 
 **summary:** Snapshots explicit typed changes and performs a filtered native set-based UPDATE.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param changes:** The explicit immutable snapshot of permitted typed root-column assignments.
 
@@ -3742,7 +3742,7 @@ public System.Threading.Tasks.Task<long> NativeWeave.Query.Query<TEntity>.Update
 
 **summary:** Runs a synchronous typed setter callback, then applies complete native assignments and a filtered UPDATE.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param setters:** The synchronous callback that stages permitted typed assignments before submission.
 
@@ -3772,7 +3772,7 @@ public NativeWeave.Query.SqlExpression<T> NativeWeave.Query.Query<TEntity>.Value
 
 **summary:** Immediately snapshots a typed literal into the native arena.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param value:** The typed value to snapshot now, or the compatible same-query native expression.
 
@@ -3800,7 +3800,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.Where(N
 
 **summary:** Appends a same-query native predicate with AND.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param predicate:** The compatible native condition or synchronous typed callback; callbacks are invoked at this call.
 
@@ -3824,7 +3824,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.Where(S
 
 **summary:** Invokes the typed callback synchronously once, then attaches its complete native predicate.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param predicate:** The compatible native condition or synchronous typed callback; callbacks are invoked at this call.
 
@@ -3848,7 +3848,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.WhereEq
 
 **summary:** Snapshots the value and appends root-column equality without a predicate delegate.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -3876,7 +3876,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.WhereGr
 
 **summary:** Snapshots the value and appends an inclusive native lower bound.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -3904,7 +3904,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.WhereIf
 
 **summary:** Invokes and attaches the callback only when the condition is true; false binds no captured values.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param condition:** The CLR branch condition, or same-query native CASE predicate required by this overload.
 
@@ -3930,7 +3930,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.WhereIs
 
 **summary:** Appends an explicit root-column IS NOT NULL predicate.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -3956,7 +3956,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.WhereIs
 
 **summary:** Appends an explicit root-column IS NULL predicate.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -3982,7 +3982,7 @@ public NativeWeave.Query.WindowDefinition NativeWeave.Query.Query<TEntity>.Windo
 
 **summary:** Creates finite query-owned native window state.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **returns:** The typed owner or proxy described above, retaining its original source/query association.
 
@@ -4004,7 +4004,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.WithTim
 
 **summary:** Snapshots a finite total execution/cursor timeout; zero expires before dispatch.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param timeout:** The finite nonnegative total execution and cursor deadline, snapshotted before dispatch.
 
@@ -4028,7 +4028,7 @@ public NativeWeave.Query.Query<TEntity> NativeWeave.Query.Query<TEntity>.With<TC
 
 **summary:** Attaches a frozen same-source native CTE and its exact immutable parameter identities.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param commonTable:** The immutable CTE from this exact source to retain in the query.
 
@@ -4084,7 +4084,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlArithmeti
 
 **summary:** Performs native numeric add with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4112,7 +4112,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlArithmeti
 
 **summary:** Performs native numeric add with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4140,7 +4140,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlArithmetic
 
 **summary:** Performs native numeric add with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4168,7 +4168,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlArithmetic
 
 **summary:** Performs native numeric add with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4196,7 +4196,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlArithmeti
 
 **summary:** Performs native numeric divide with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4224,7 +4224,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlArithmeti
 
 **summary:** Performs native numeric divide with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4252,7 +4252,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlArithmetic
 
 **summary:** Performs native numeric divide with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4280,7 +4280,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlArithmetic
 
 **summary:** Performs native numeric divide with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4308,7 +4308,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlArithmeti
 
 **summary:** Performs native numeric multiply with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4336,7 +4336,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlArithmeti
 
 **summary:** Performs native numeric multiply with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4364,7 +4364,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlArithmetic
 
 **summary:** Performs native numeric multiply with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4392,7 +4392,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlArithmetic
 
 **summary:** Performs native numeric multiply with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4420,7 +4420,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlArithmeti
 
 **summary:** Performs native numeric subtract with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4448,7 +4448,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlArithmeti
 
 **summary:** Performs native numeric subtract with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4476,7 +4476,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlArithmetic
 
 **summary:** Performs native numeric subtract with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4504,7 +4504,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlArithmetic
 
 **summary:** Performs native numeric subtract with explicit SQL NULL propagation.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -4542,7 +4542,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.Between
 
 **summary:** Snapshots two bounds and creates native inclusive BETWEEN.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param lower:** The inclusive lower endpoint, copied before the method returns.
 
@@ -4568,7 +4568,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.Equal(N
 
 **summary:** Applies native Equal with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param other:** The compatible same-source selection or same-query expression required by this operation.
 
@@ -4592,7 +4592,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.Equal(T
 
 **summary:** Applies native Equal with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param value:** The typed value to snapshot now, or the compatible same-query native expression.
 
@@ -4616,7 +4616,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.Greater
 
 **summary:** Applies native GreaterThan with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param other:** The compatible same-source selection or same-query expression required by this operation.
 
@@ -4640,7 +4640,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.Greater
 
 **summary:** Applies native GreaterThan with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param value:** The typed value to snapshot now, or the compatible same-query native expression.
 
@@ -4664,7 +4664,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.Greater
 
 **summary:** Applies native GreaterThanOrEqual with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param other:** The compatible same-source selection or same-query expression required by this operation.
 
@@ -4688,7 +4688,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.Greater
 
 **summary:** Applies native GreaterThanOrEqual with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param value:** The typed value to snapshot now, or the compatible same-query native expression.
 
@@ -4712,7 +4712,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.In(Nati
 
 **summary:** Snapshots a compatible same-source single-column subquery into native IN.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param subquery:** A current same-source selection whose native plan is cloned under admission.
 
@@ -4736,7 +4736,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.In(Syst
 
 **summary:** Snapshots a finite value span; an empty span yields native FALSE.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param values:** The finite typed input values, copied before returning; the span is never retained.
 
@@ -4760,7 +4760,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.IsNotNu
 
 **summary:** Tests SQL non-NULL explicitly.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **returns:** A same-query borrowed native predicate token with SQL three-valued semantics.
 
@@ -4782,7 +4782,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.IsNull(
 
 **summary:** Tests SQL NULL explicitly without substituting a sentinel.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **returns:** A same-query borrowed native predicate token with SQL three-valued semantics.
 
@@ -4804,7 +4804,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.LessTha
 
 **summary:** Applies native LessThan with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param other:** The compatible same-source selection or same-query expression required by this operation.
 
@@ -4828,7 +4828,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.LessTha
 
 **summary:** Applies native LessThan with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param value:** The typed value to snapshot now, or the compatible same-query native expression.
 
@@ -4852,7 +4852,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.LessTha
 
 **summary:** Applies native LessThanOrEqual with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param other:** The compatible same-source selection or same-query expression required by this operation.
 
@@ -4876,7 +4876,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.LessTha
 
 **summary:** Applies native LessThanOrEqual with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param value:** The typed value to snapshot now, or the compatible same-query native expression.
 
@@ -4900,7 +4900,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.NotEqua
 
 **summary:** Applies native NotEqual with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param other:** The compatible same-source selection or same-query expression required by this operation.
 
@@ -4924,7 +4924,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.NotEqua
 
 **summary:** Applies native NotEqual with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param value:** The typed value to snapshot now, or the compatible same-query native expression.
 
@@ -4948,7 +4948,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.NotIn(S
 
 **summary:** Snapshots a finite value span; an empty span yields native TRUE.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param values:** The finite typed input values, copied before returning; the span is never retained.
 
@@ -4972,7 +4972,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.NullSaf
 
 **summary:** Applies native NullSafeEqual with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param other:** The compatible same-source selection or same-query expression required by this operation.
 
@@ -4996,7 +4996,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlExpression<T>.NullSaf
 
 **summary:** Applies native NullSafeEqual with exact codec/source checks and SQL NULL semantics.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param value:** The typed value to snapshot now, or the compatible same-query native expression.
 
@@ -5020,7 +5020,7 @@ public NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlExpression<T>.Ove
 
 **summary:** Snapshots same-query native window state onto an eligible aggregate or rank expression.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param window:** The same-query window definition to snapshot at this call.
 
@@ -5044,7 +5044,7 @@ public static NativeWeave.Query.SqlExpression<decimal?> NativeWeave.Query.SqlFun
 
 **summary:** Aggregates native decimal inputs to nullable decimal, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5068,7 +5068,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native double inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5092,7 +5092,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native int inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5116,7 +5116,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native long inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5140,7 +5140,7 @@ public static NativeWeave.Query.SqlExpression<decimal?> NativeWeave.Query.SqlFun
 
 **summary:** Aggregates native decimal? inputs to nullable decimal, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5164,7 +5164,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native double? inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5188,7 +5188,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native int? inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5212,7 +5212,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native long? inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5236,7 +5236,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native float? inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5260,7 +5260,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native float inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5284,7 +5284,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlFunctions.
 
 **summary:** Creates a native CASE with same-query compatible scalar alternatives.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param condition:** The CLR branch condition, or same-query native CASE predicate required by this overload.
 
@@ -5314,7 +5314,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlFunctions.
 
 **summary:** Produces a non-null reference scalar with native SQL COALESCE.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5342,7 +5342,7 @@ public static NativeWeave.Query.SqlExpression<T> NativeWeave.Query.SqlFunctions.
 
 **summary:** Produces a non-null scalar with native SQL COALESCE and an explicitly copied fallback.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5370,7 +5370,7 @@ public static NativeWeave.Query.SqlExpression<long> NativeWeave.Query.SqlFunctio
 
 **summary:** Counts non-null native values, optionally using DISTINCT, with exact Int64 result metadata.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5398,7 +5398,7 @@ public static NativeWeave.Query.SqlExpression<string?> NativeWeave.Query.SqlFunc
 
 **summary:** Returns native text maximum under SQL collation with empty-input NULL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5422,7 +5422,7 @@ public static NativeWeave.Query.SqlExpression<string?> NativeWeave.Query.SqlFunc
 
 **summary:** Returns native text maximum under SQL collation with empty-input NULL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5446,7 +5446,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlFunctions
 
 **summary:** Returns the native maximum with the exact scalar codec and empty-input SQL NULL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5472,7 +5472,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlFunctions
 
 **summary:** Returns the native maximum with the exact scalar codec and empty-input SQL NULL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5498,7 +5498,7 @@ public static NativeWeave.Query.SqlExpression<string?> NativeWeave.Query.SqlFunc
 
 **summary:** Returns native text minimum under SQL collation with empty-input NULL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5522,7 +5522,7 @@ public static NativeWeave.Query.SqlExpression<string?> NativeWeave.Query.SqlFunc
 
 **summary:** Returns native text minimum under SQL collation with empty-input NULL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5546,7 +5546,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlFunctions
 
 **summary:** Returns the native minimum with the exact scalar codec and empty-input SQL NULL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5572,7 +5572,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlFunctions
 
 **summary:** Returns the native minimum with the exact scalar codec and empty-input SQL NULL.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5598,7 +5598,7 @@ public static NativeWeave.Query.SqlExpression<long> NativeWeave.Query.SqlFunctio
 
 **summary:** Snapshots a native window into an exact Int64 RANK expression.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param window:** The same-query window definition to snapshot at this call.
 
@@ -5622,7 +5622,7 @@ public static NativeWeave.Query.SqlExpression<long> NativeWeave.Query.SqlFunctio
 
 **summary:** Snapshots a native window into an exact Int64 ROW_NUMBER expression.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param window:** The same-query window definition to snapshot at this call.
 
@@ -5646,7 +5646,7 @@ public static NativeWeave.Query.SqlExpression<decimal?> NativeWeave.Query.SqlFun
 
 **summary:** Aggregates native decimal inputs to nullable decimal, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5670,7 +5670,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native double inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5694,7 +5694,7 @@ public static NativeWeave.Query.SqlExpression<long?> NativeWeave.Query.SqlFuncti
 
 **summary:** Aggregates native int inputs to nullable long, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5718,7 +5718,7 @@ public static NativeWeave.Query.SqlExpression<long?> NativeWeave.Query.SqlFuncti
 
 **summary:** Aggregates native long inputs to nullable long, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5742,7 +5742,7 @@ public static NativeWeave.Query.SqlExpression<decimal?> NativeWeave.Query.SqlFun
 
 **summary:** Aggregates native decimal? inputs to nullable decimal, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5766,7 +5766,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native double? inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5790,7 +5790,7 @@ public static NativeWeave.Query.SqlExpression<long?> NativeWeave.Query.SqlFuncti
 
 **summary:** Aggregates native int? inputs to nullable long, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5814,7 +5814,7 @@ public static NativeWeave.Query.SqlExpression<long?> NativeWeave.Query.SqlFuncti
 
 **summary:** Aggregates native long? inputs to nullable long, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5838,7 +5838,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native float? inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5862,7 +5862,7 @@ public static NativeWeave.Query.SqlExpression<double?> NativeWeave.Query.SqlFunc
 
 **summary:** Aggregates native float inputs to nullable double, preserving empty-input NULL and explicit conversion failures.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5886,7 +5886,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlNullabili
 
 **summary:** Returns a fresh same-query nullable reference token; already-nullable metadata rejects.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5912,7 +5912,7 @@ public static NativeWeave.Query.SqlExpression<T?> NativeWeave.Query.SqlNullabili
 
 **summary:** Returns a fresh same-query nullable scalar token, preserving the exact value and codec.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -5948,7 +5948,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlPredicate.And(NativeW
 
 **summary:** Combines same-query conditions with native AND.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param other:** The compatible same-source selection or same-query expression required by this operation.
 
@@ -5972,7 +5972,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlPredicate.Not()
 
 **summary:** Negates this condition using native SQL NOT.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **returns:** A same-query borrowed native predicate token with SQL three-valued semantics.
 
@@ -5994,7 +5994,7 @@ public NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlPredicate.Or(NativeWe
 
 **summary:** Combines same-query conditions with native OR.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param other:** The compatible same-source selection or same-query expression required by this operation.
 
@@ -6018,7 +6018,7 @@ public static NativeWeave.Query.SqlExpression<string> NativeWeave.Query.SqlStrin
 
 **summary:** Applies only a collation admitted by the provider's fixed allowlist.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -6044,7 +6044,7 @@ public static NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlStringExtensio
 
 **summary:** Escapes wildcard characters and binds a literal contains pattern.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -6070,7 +6070,7 @@ public static NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlStringExtensio
 
 **summary:** Escapes literal wildcard characters and searches nullable SQL text.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -6096,7 +6096,7 @@ public static NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlStringExtensio
 
 **summary:** Escapes wildcard characters and binds a literal suffix pattern.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -6122,7 +6122,7 @@ public static NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlStringExtensio
 
 **summary:** Binds the supplied raw SQL LIKE pattern with an explicit escape character.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -6150,7 +6150,7 @@ public static NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlStringExtensio
 
 **summary:** Uses an explicit raw LIKE pattern against nullable SQL text.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -6178,7 +6178,7 @@ public static NativeWeave.Query.SqlPredicate NativeWeave.Query.SqlStringExtensio
 
 **summary:** Escapes wildcard characters and binds a literal prefix pattern.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -6204,7 +6204,7 @@ public NativeWeave.Query.UpdateSetters<TEntity> NativeWeave.Query.UpdateSetters<
 
 **summary:** Stages a compatible same-query expression; assignments attach only after the callback succeeds.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -6232,7 +6232,7 @@ public NativeWeave.Query.UpdateSetters<TEntity> NativeWeave.Query.UpdateSetters<
 
 **summary:** Copies a typed value for a nonkey, nongenerated root-column assignment.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param column:** The strongly typed column from the declared table; foreign table identities reject.
 
@@ -6260,7 +6260,7 @@ public NativeWeave.Query.WindowDefinition NativeWeave.Query.WindowDefinition.Ord
 
 **summary:** Appends native ordering with explicit direction and SQL NULL placement.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -6290,7 +6290,7 @@ public NativeWeave.Query.WindowDefinition NativeWeave.Query.WindowDefinition.Par
 
 **summary:** Appends a same-query native partition expression.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param expression:** The compatible native scalar owned by the same live query.
 
@@ -6316,7 +6316,7 @@ public NativeWeave.Query.WindowDefinition NativeWeave.Query.WindowDefinition.Row
 
 **summary:** Sets one supported ROWS frame; invalid endpoints reject before publication.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **param start:** The supported starting ROWS frame endpoint.
 
@@ -6930,7 +6930,7 @@ public NativeWeave.Query.QueryRow<TEntity> NativeWeave.Query.Query<TEntity>.Row 
 
 **summary:** Gets the live typed root-column proxy.
 
-**inheritdoc:** 
+**inheritdoc:**
 
 **Inherited type policy:** Composition is synchronous and fail-fast on concurrent writers. The first terminal seals the query; use Clone before a second execution. Keep this owner alive across streaming and dispose after use.
 

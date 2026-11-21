@@ -1,6 +1,0 @@
-nativeweave-metadata-v1
-module	nativeweave.packaging.consumer
-digest	25e0881f37b8989fee65bfab3813f920687e2c27c9b07d4c78e5a16098f313a3
-namespace	NativeWeave.Generated.Conformance
-library	nw_packaging
-source_sha256	c7457603cef92d0a2b3006105e277c67c702cb4023fa28202886a5c37ed0495e

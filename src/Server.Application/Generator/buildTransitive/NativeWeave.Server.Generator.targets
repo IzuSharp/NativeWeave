@@ -1,5 +1,0 @@
-<Project>
-  <ItemGroup Condition="'$(NativeWeaveExcludeGenerators)' != 'true'">
-    <Analyzer Include="$(MSBuildThisFileDirectory)..\tools\roslyn\NativeWeave.Server.Generator.dll" />
-  </ItemGroup>
-</Project>

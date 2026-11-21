@@ -1,4 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>Exe</OutputType><IsAotCompatible>true</IsAotCompatible></PropertyGroup>
-  <ItemGroup><ProjectReference Include="../../../src/Server.Application/NativeWeave.Server.csproj" /></ItemGroup>
-</Project>

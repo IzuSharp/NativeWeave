@@ -1,6 +1,0 @@
-<Project>
-  <ItemGroup Condition="'$(NativeWeaveExcludeGenerators)' != 'true'">
-    <!-- One compiler payload path, not duplicate automatic analyzer assets. -->
-    <Analyzer Include="$(MSBuildThisFileDirectory)..\tools\roslyn\NativeWeave.Generators.CSharp.Metadata.dll" />
-  </ItemGroup>
-</Project>

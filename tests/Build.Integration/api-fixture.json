@@ -7,7 +7,7 @@
     "tests/Build.Integration/api-fixture.expected.json"
   ],
   "title": "A13 compiled API conformance",
-  "scope": "Unpublished Linux build-tool conformance fixture. This is not an application package or a product Engine. Native execution is verified by the separate A13 consumer.",
+  "scope": "Unpublished API documentation tool fixture: exact signature, default/nullability and XML rejection checks for the retained database/Core maintainer tool. This is not an application or native engine package.",
   "output": "artifacts/task03/A13/reference/api-reference.md",
   "guides": [
     "docs/guides/build-integration.md"

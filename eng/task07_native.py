@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build the explicit Task-07 Linux native profiles and bind their inputs.
+"""Build the two independent Linux database native profiles and bind their inputs.
 
 Maintainer-only entrypoint. Applications consume the resulting immutable NuGet
 assets; this file is never called by a consumer target or source generator.
@@ -46,14 +46,14 @@ def main():
     args = parser.parse_args()
     output = args.output.resolve()
     if (platform.system(), platform.machine().lower()) != ("Linux", "x86_64"):
-        raise RuntimeError("Task-07 currently verifies only Linux x64")
+        raise RuntimeError("Database candidates currently verify only Linux x64")
     if output.exists():
         raise RuntimeError("Choose a fresh native build output; existing evidence is immutable")
     if capture(["git", "status", "--porcelain"]):
         raise RuntimeError("Commit the maintainer source before building a candidate")
     source = capture(["git", "rev-parse", "HEAD"])
     env = os.environ.copy()
-    # These builds match the explicit original provider/Server feature profiles.
+    # Each database provider has an independent explicit native feature profile.
     # Do not inherit an unrecorded CPU, allocator or feature-affecting override.
     for key in ("RUSTFLAGS", "CARGO_ENCODED_RUSTFLAGS", "RUSTC", "RUSTC_WRAPPER", "RUSTC_WORKSPACE_WRAPPER",
                 "CARGO_BUILD_RUSTFLAGS", "CARGO_BUILD_TARGET", "CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS"):
@@ -103,13 +103,12 @@ def main():
                         "CARGO_BUILD_JOBS": env.get("CARGO_BUILD_JOBS"),
                         "RUSTC": executables["rustc"], "RUSTFLAGS": "", "CARGO_ENCODED_RUSTFLAGS": ""},
         "builds": [], "assets": [],
-        "scope": "Exact newly built local-only B24 candidate inputs; historical B22/B23 numbers retain their original artifact hashes."
+        "scope": "DB-Scope-01: exact newly built local database candidate inputs; historical evidence retains its original identities."
     }
     profiles = [
-        ("sqlite-server", ["-p", "nativeweave-database-host", "-p", "nativeweave-server"],
+        ("sqlite", ["-p", "nativeweave-database-host"],
          "nativeweave-database-host/sqlite",
-         [("database.sqlite", "nativeweave_database_host", "libnw_database_sqlite.so"),
-          ("server", "nativeweave_server", "libnativeweave_server.so")]),
+         [("database.sqlite", "nativeweave_database_host", "libnw_database_sqlite.so")]),
         ("postgresql", ["-p", "nativeweave-database-host"], "nativeweave-database-host/postgres",
          [("database.postgresql", "nativeweave_database_host", "libnw_database_postgresql.so")])
     ]

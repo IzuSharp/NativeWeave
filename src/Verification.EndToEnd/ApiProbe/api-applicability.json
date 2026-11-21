@@ -1,21 +1,14 @@
 {
   "schemaVersion": 1,
-  "task": "B22",
-  "designCommit": "c62cdb8aee833b6ab1a03e29a3f59f81a1b483f9",
-  "surface": "Internal package consumer and external independent durable-data controller",
-  "exportedFrameworkTypes": [],
+  "task": "DB-Scope-01",
+  "surface": "Internal direct database package consumer",
   "publicApiChange": false,
   "nativeAbiChange": false,
+  "consumers": [
+    "NativeWeave.Database.Sqlite",
+    "NativeWeave.Database.PostgreSql"
+  ],
   "documentation": "tests/Verification.EndToEnd/api-probe.md",
-  "xmlDocumentation": "ApiProbe.csproj emits XML; internal implementation comments identify ownership and oracle boundaries",
-  "consumers": ["NativeWeave.Database.Sqlite", "NativeWeave.Database.PostgreSql", "NativeWeave.Server.Grpc", "NativeWeave.Server.Mcp"],
-  "nativeMapping": {
-    "database": "Public DataSource/DataSession/transaction/query/relation APIs -> existing database ABI -> Rust SQLx/SeaQuery and real SQLite/PostgreSQL",
-    "http": "Public NativeServer and ServerRequest/ServerResponse -> existing Server ABI -> Rust Hyper/Axum/Tokio/rustls",
-    "grpc": "Static application message marshaller and public gRPC calls -> existing Tonic host; raw real HTTP2 client checks independent frames/metadata",
-    "mcp": "Source-generated JSON and public MCP registry -> existing Rust MCP host; actual business callback performs native database query",
-    "resourceObservation": "Public close results, explicit weak-reference/disposal witnesses, and fixed database diagnostic export; no aggregate managed-root claim"
-  },
-  "platformScope": "Linux x64 JIT and explicit-RID NativeAOT; Windows is not executed",
-  "acceptance": "Actual public API rows supplement B22. They never replace external fault, long-duration, independent review, or B24 pristine gates."
+  "historicalSource": "ea5fa528035d025bd7a28698ee7c71194432236c",
+  "retained": "DatabaseCases plus nullable composite-FK assertions extracted from HttpCases; no HTTP or protocol runtime"
 }

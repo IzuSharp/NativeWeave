@@ -31,7 +31,7 @@ def certificates(directory):
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,required=True);parser.add_argument('--postgres-bin',type=Path,required=True);parser.add_argument('--offline-config',type=Path);parser.add_argument('--native-only',action='store_true');parser.add_argument('--write-reference',action='store_true');parser.add_argument('--update-locks',action='store_true');parser.add_argument('--design-root',type=Path,default=ROOT.parent.parent/'Task-02-linux/NativeWeave-Design')
     args=parser.parse_args();output=args.output.resolve();output.mkdir(parents=True,exist_ok=False)
-    env=os.environ.copy();inputs=[];env.update(DOTNET_CLI_USE_MSBUILD_SERVER='0',MSBUILDUSESERVER='0');records=[];servers=[];status='failed'
+    env=os.environ.copy();inputs=[];env.update(DOTNET_CLI_USE_MSBUILD_SERVER='0',MSBUILDUSESERVER='0');records=[];servers=[];status='failed';host_preflight=False
     for name in list(env):
         if name.startswith('PG'): del env[name]
     def run(label,command,extra=None):
@@ -51,11 +51,14 @@ def main():
             if sha(design/item['path'])!=item['sha256']:raise RuntimeError('Pinned Design input mismatch: '+item['path'])
         canonical=json.loads((design/'docs/api/public-api.json').read_text())['symbols']
         expected=[item for item in canonical if 'NativeWeave.Database.PostgreSql.' in item['id']]
-        local=json.loads((ROOT/'src/Data.Postgres/public-api.expected.json').read_text())['symbols']+json.loads((ROOT/'src/Data.Postgres/downstream-composition.json').read_text())['symbols']
-        if {x['id']:x for x in expected}!={x['id']:x for x in local}:raise RuntimeError('Current and explicit downstream API slices differ from pinned Design.')
-        prefixes=['src/Data.Postgres/','tests/Data.Postgres/','samples/api/data-postgres/','native/database/postgres/','native/database/codecs/','native/database/interfaces/','native/database/transactions/','native/interop/abi/','src/Interop.Abi/','src/Interop.Negotiation/','src/Interop.Errors/','src/NativeWeave.Core/','src/Data.Abstractions/']
-        shared={'Cargo.toml','Cargo.lock','Directory.Build.props','global.json','rust-toolchain.toml','docs/guides/data-postgres.md'}
-        paths=subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0')
+        local=json.loads((ROOT/'src/Data.Postgres/public-api.expected.json').read_text())['symbols']
+        local_by_id={x['id']:x for x in local}
+        if len(local)!=len(expected) or {x['id']:x for x in expected}!=local_by_id:raise RuntimeError('The complete integrated provider API differs from pinned Design.')
+        historical=json.loads((ROOT/'src/Data.Postgres/downstream-composition.json').read_text())['symbols']
+        if any(item!=local_by_id.get(item['id']) for item in historical):raise RuntimeError('The historical B04 ownership slice differs from the integrated provider API.')
+        prefixes=['src/Data.Postgres/','tests/Data.Postgres/','samples/api/data-postgres/','src/Data.NativeHost/','native/database/host/','native/database/postgres/','native/database/codecs/','native/database/interfaces/','native/database/transactions/','native/interop/abi/','src/Interop.Abi/','src/Interop.Negotiation/','src/Interop.Errors/','src/NativeWeave.Core/','src/Data.Abstractions/']
+        shared={'Cargo.toml','Cargo.lock','Directory.Build.props','global.json','rust-toolchain.toml','docs/guides/data-postgres.md','tests/ProviderProfileChecks.cs'}
+        paths=subprocess.check_output(['git','ls-files','--cached','--others','--exclude-standard','-z'],cwd=ROOT).decode().split('\0')
         inputs=[{'path':p,'sha256':sha(ROOT/p)} for p in paths if p and (p in shared or any(p.startswith(prefix) for prefix in prefixes))]
         (output/'source-inputs.json').write_text(json.dumps({'commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'git_status':subprocess.check_output(['git','status','--short'],cwd=ROOT,text=True),'inputs':inputs,'preparation':args.write_reference or args.update_locks},indent=2)+'\n')
         run('rust-toolchain',['rustc','--version','--verbose'])
@@ -87,6 +90,7 @@ def main():
             run('component-link-command',['cargo','rustc','-p','nativeweave-data-postgres','--release','--locked','--offline','--','--print=link-args'])
             run('fixture-release',['cargo','build','--manifest-path','tests/Data.Postgres/native/Cargo.toml','--release','--locked','--offline'])
             run_managed(args,output,run,native_env)
+            host_preflight=True
         if not (args.write_reference or args.update_locks):
             for item in inputs:
                 if sha(ROOT/item['path'])!=item['sha256']:raise RuntimeError('Source/lock changed during verification: '+item['path'])
@@ -99,12 +103,14 @@ def main():
             try:process.wait(timeout=20)
             except subprocess.TimeoutExpired:process.kill();process.wait()
             logfile.close()
-        result={'task':'B02','platform':'linux-x64','status':status,'commands':len(records),'native_only':args.native_only,'component_only':True,'full_b04_host':False,'other_platforms_executed':[],'source_manifest_sha256':sha(output/'source-inputs.json') if (output/'source-inputs.json').exists() else None}
+        result={'task':'B02','platform':'linux-x64','status':status,'commands':len(records),'native_only':args.native_only,'component_only':True,'host_preflight':host_preflight,'full_b04_host':False,'other_platforms_executed':[],'source_manifest_sha256':sha(output/'source-inputs.json') if (output/'source-inputs.json').exists() else None}
         (output/'summary.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result),flush=True)
     return 0 if status=='passed' else 1
 
 def run_managed(args,output,run,native_env):
-    asset=ROOT/'target/release/libnativeweave_data_postgres.so'
+    component=ROOT/'target/release/libnativeweave_data_postgres.so'
+    asset=ROOT/'target/release/libnw_database_postgresql.so'
+    if not asset.is_file():raise RuntimeError('Build the actual PostgreSQL Database Host before component/preflight verification.')
     fixture=ROOT/'tests/Data.Postgres/native/target/release/libnativeweave_postgres_fixture.so'
     msbuild=['-p:UseSharedCompilation=false','-nr:false','-m:1',f'-p:NativeWeavePostgresAssetPath={asset}']
     restore=(['--configfile',str(args.offline_config.resolve())] if args.offline_config else []) + ([] if args.update_locks else ['--locked-mode'])
@@ -114,8 +120,10 @@ def run_managed(args,output,run,native_env):
     for label,project in [('test',test),('api',checker),('sample',sample)]:
         run(label+'-restore',['dotnet','restore',project,*restore,*msbuild])
         run(label+'-build',['dotnet','build',project,'-c','Release','--no-restore',*msbuild])
+    run('managed-whitespace',['dotnet','format','whitespace','.', '--folder','--verify-no-changes','--include',
+                             'tests/Data.Postgres/Program.cs','tests/ProviderProfileChecks.cs','samples/api/data-postgres/Program.cs','--verbosity','quiet'])
     run('exact-api-xml-reference',['dotnet',str(ROOT/'tests/Data.Postgres/ApiCheck/bin/Release/net11.0/ApiCheck.dll'),str(ROOT),os.environ['DOTNET_ROOT'],str(ROOT/'src/Data.Postgres/bin/Release/net11.0/NativeWeave.Database.PostgreSql.dll'),*(['--write'] if args.write_reference else [])])
-    native_env=native_env|{'NW_PG_COMPONENT_ASSET':str(asset),'LD_LIBRARY_PATH':str(fixture.parent)+':'+os.environ.get('LD_LIBRARY_PATH','')}
+    native_env=native_env|{'NW_PG_COMPONENT_ASSET':str(component),'NW_PG_HOST_ASSET':str(asset),'LD_LIBRARY_PATH':str(fixture.parent)+':'+os.environ.get('LD_LIBRARY_PATH','')}
     run('managed-jit',['dotnet',str(ROOT/'tests/Data.Postgres/bin/Release/net11.0/NativeWeave.Database.PostgreSql.Tests.dll')],native_env|{'NW_PG_REPORT':str(output/'jit-report.json'),'NW_PG_OPTION_RECORD':str(output/'jit-options.bin')})
     run('sample-jit',['dotnet',str(ROOT/'samples/api/data-postgres/bin/Release/net11.0/PostgresExample.dll')],native_env)
     for label,project,name in [('test',test,'NativeWeave.Database.PostgreSql.Tests'),('sample',sample,'PostgresExample')]:
@@ -127,9 +135,15 @@ def run_managed(args,output,run,native_env):
         run(label+'-aot-run',[destination/name,*(['--require-aot'] if label=='test' else [])],native_env|{'NW_PG_REPORT':str(output/(label+'-aot-report.json')),'NW_PG_OPTION_RECORD':str(output/(label+'-aot-options.bin'))})
     generated=[]
     for path in (ROOT/'src/Data.Postgres/obj').rglob('*'):
-        if path.is_file() and (path.name=='PostgreSqlAssetIdentity.g.cs' or path.name=='NativeWeave.nativeweave.postgres.component.assets.json'):
+        if path.is_file() and (path.name=='PostgreSqlAssetIdentity.g.cs' or path.name=='NativeWeave.database.postgresql.assets.json'):
             generated.append({'path':str(path.relative_to(ROOT)),'sha256':sha(path),'content':path.read_text()})
     (output/'generated-asset-inputs.json').write_text(json.dumps(generated,indent=2)+'\n')
-    paths=[asset,fixture,ROOT/'src/Data.Postgres/bin/Release/net11.0/NativeWeave.Database.PostgreSql.dll',output/'test-aot/NativeWeave.Database.PostgreSql.Tests',output/'sample-aot/PostgresExample']
+    for location in [ROOT/'tests/Data.Postgres/bin/Release/net11.0',output/'test-aot',output/'sample-aot']:
+        record=json.loads((location/'NativeWeave.database.postgresql.assets.json').read_text())
+        if (record['engineId']!='database.postgresql' or record['packageId']!='NativeWeave.Database.PostgreSql'
+            or record['sourcePath']!=record['outputPath'] or record['outputPath']!='runtimes/linux-x64/native/libnw_database_postgresql.so'
+            or record['sha256']!=sha(asset) or sha(location/record['outputPath'])!=sha(asset)):
+            raise RuntimeError('Actual PostgreSQL Host asset record/hash differs from the staged Host.')
+    paths=[component,asset,fixture,ROOT/'src/Data.Postgres/bin/Release/net11.0/NativeWeave.Database.PostgreSql.dll',output/'test-aot/NativeWeave.Database.PostgreSql.Tests',output/'sample-aot/PostgresExample']
     (output/'artifacts.json').write_text(json.dumps([{'path':str(p),'sha256':sha(p),'bytes':p.stat().st_size} for p in paths],indent=2)+'\n')
 if __name__=='__main__':raise SystemExit(main())

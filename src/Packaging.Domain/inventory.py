@@ -140,7 +140,7 @@ def collect(build_manifest_path):
         if not path.is_relative_to(ROOT) or sha(path) != expected:
             raise ValueError("Native source/profile input changed: " + name)
     builds = {item["label"]: item for item in build["builds"]}
-    if len(builds) != len(build["builds"]) or set(builds) != {"sqlite-server", "postgresql"}:
+    if len(builds) != len(build["builds"]) or set(builds) != {"sqlite", "postgresql"}:
         raise ValueError("Native build must preserve the two selected provider profiles")
     inputs = {}
     for label, item in builds.items():
@@ -169,7 +169,7 @@ def collect(build_manifest_path):
                   "distribution": {key: std_distribution[key] for key in ("url", "hash", "xz_url", "xz_hash")}}
     assets = {item["engineId"]: item for item in build["assets"]}
     if set(assets) != set(ENGINES) or len(assets) != len(build["assets"]):
-        raise ValueError("Exactly the three domain native artifacts are required")
+        raise ValueError("Exactly the two database native artifacts are required")
     profile = module("domain_linux_profile", "src/Packaging.Linux/linux_profile.py")
     result = {}
     notice_cache = {}
@@ -178,7 +178,7 @@ def collect(build_manifest_path):
         binary = Path(asset["path"])
         if sha(binary) != asset["sha256"]:
             raise ValueError("Native output changed after build: " + engine)
-        label = "postgresql" if engine == "database.postgresql" else "sqlite-server"
+        label = "postgresql" if engine == "database.postgresql" else "sqlite"
         if asset["buildLabel"] != label:
             raise ValueError("Native artifact was selected from the wrong provider profile")
         metadata, messages = inputs[label]
@@ -193,13 +193,14 @@ def collect(build_manifest_path):
         if selected_outputs != {compiler_path}:
             raise ValueError("Native frozen output was not selected from its recorded compiler artifact")
         native_audit = profile.inspect(binary, allowed_dependencies=SYSTEM_DEPENDENCIES)
-        bootstrap = "nw_server_get_abi_v1" if engine == "server" else "nw_database_get_abi_v1"
-        if bootstrap not in native_audit["exports"]:
+        if "nw_database_get_abi_v1" not in native_audit["exports"]:
             raise ValueError("Required domain ABI bootstrap export is absent")
         entries = {"nativeweave/licenses/rust-standard-library/COPYRIGHT-library.html": std_notice.read_bytes()}
         records = []
         for item in selected:
             package = item["package"]
+            if package["name"].startswith(("nativeweave-server", "nativeweave-protocol", "nativeweave-hello", "nativeweave-sync-proof", "nativeweave-async-proof", "nativeweave-extension-proof")):
+                raise ValueError("Retired product entered the selected database native inputs: " + package["name"])
             record = {key: package.get(key) for key in ("id", "name", "version", "source", "license", "repository")}
             record.update({key: item[key] for key in ("roles", "features", "targetKinds")})
             if package["source"] is None:

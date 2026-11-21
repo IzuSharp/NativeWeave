@@ -1,9 +1,0 @@
-{
-  "assembly": "src/Engines.AsyncProof/bin/Release/net11.0/NativeWeave.Engines.AsyncProof.dll",
-  "sources": ["src/Engines.AsyncProof"],
-  "baselines": ["src/Engines.AsyncProof/public-api.expected.json"],
-  "title": "NativeWeave asynchronous HTTP proof-engine API",
-  "scope": "A18 bounded real Hyper/Tokio service, static foreign Handler and owned streaming profile. Linux x64 only; no final Server API or all-platform claim.",
-  "output": "src/Engines.AsyncProof/api-reference.md",
-  "guides": ["docs/guides/engines-asyncproof.md"]
-}

@@ -1,7 +1,6 @@
-"""Bounded external process/evidence helpers for the actual B22 composition.
+"""Bounded external process/evidence helpers for database-only composition.
 
-No NativeWeave implementation is imported. The B21 controller supplies its
-already-reviewed HTTP client and independent SQL adapter, not product outcomes.
+No NativeWeave implementation is imported. The reference fixture supplies its independent SQL adapter, never product outcomes.
 """
 from __future__ import annotations
 
@@ -24,12 +23,12 @@ from typing import Any, Callable
 HERE = Path(__file__).resolve().parent
 REFERENCE = HERE.parent / "Reference.TaskService"
 sys.path.insert(0, str(REFERENCE))
-_spec = importlib.util.spec_from_file_location("b22_reference_transport", REFERENCE / "run.py")
+_spec = importlib.util.spec_from_file_location("database_reference_fixture", REFERENCE / "run.py")
 assert _spec and _spec.loader
 reference = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(reference)
 Database = reference.Database
-create = reference.create
+run_case = reference.run_case
 from postgres_oracles import PostgreSqlProxy, OracleFailure, _cstring  # noqa: E402
 
 
@@ -100,52 +99,12 @@ class Request:
         return self.value
 
 
-class Service(reference.Service):
-    """B21's real client/process owner with explicitly labelled crash behavior."""
-    def __init__(self, *args, observed=False, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.intentional_crash = False
-        self.observed = observed
-
-    def __enter__(self):
-        if self.observed:
-            self.command = ["env", "NW_B22_OBSERVATIONS=" + str(self.output.resolve() / "observations.jsonl"), *self.command]
-        result = super().__enter__()
-        if self.observed:
-            def live_sample():
-                path = self.output / "observations.jsonl"
-                if not path.exists(): return False
-                try:
-                    rows = [json.loads(line) for line in path.read_text().splitlines()]
-                except json.JSONDecodeError:
-                    return False
-                expected = {"sqlite", "postgresql"} if self.config["provider"] == "postgresql" else {"sqlite"}
-                return any(set(row["databaseNativeOwners"]) == expected and
-                    all(len(values) == 6 and values[0] > 0 for values in row["databaseNativeOwners"].values()) for row in rows)
-            eventually(live_sample, "actual provider source visible in selected module", timeout=10)
-        return result
-
-    def crash(self):
-        require(self.process is not None and self.process.poll() is None,
-                "Crash barrier requires a live reference process")
-        self.intentional_crash = True
-        os.killpg(self.process.pid, signal.SIGKILL)
-        self.process.wait(timeout=15)
-        require(self.process.returncode == -signal.SIGKILL, "Reference process was not killed at the barrier")
-
-    def __exit__(self, exc_type, exc, traceback):
-        if self.intentional_crash:
-            # Process exit is intentionally not reported as resource retirement.
-            return super().__exit__(RuntimeError, RuntimeError("intentional process crash"), None)
-        return super().__exit__(exc_type, exc, traceback)
-
-
 class Evidence:
     def __init__(self, output: Path, identity: dict[str, Any]):
         self.output = output
         output.mkdir(parents=True, exist_ok=False)
         self.started = time.monotonic_ns()
-        self.record: dict[str, Any] = {"schemaVersion": 1, "task": "B22", "platform": "linux-x64",
+        self.record: dict[str, Any] = {"schemaVersion": 1, "task": "DB-Scope-01", "platform": "linux-x64",
             "identity": identity, "startedUnixNs": time.time_ns(), "status": "running", "cases": []}
         self.timeline = (output / "timeline.jsonl").open("w", encoding="utf-8")
         self.current: dict[str, Any] | None = None
@@ -196,7 +155,6 @@ class Evidence:
     def close(self):
         cases = self.record["cases"]
         self.record["status"] = "passed" if cases and all(x["status"] == "passed" for x in cases) else "incomplete"
-        self.record["longDurationAcceptance"] = {"steady30m": "not-run", "regression24h": "not-run", "release72h": "not-run"}
         self.save(); self.timeline.close()
 
 
@@ -214,7 +172,6 @@ class PostgresCluster:
     def __enter__(self):
         self.output.mkdir(parents=True, exist_ok=False)
         version = subprocess.check_output([self.binary / "postgres", "--version"], text=True).strip()
-        require(version.endswith(" 18.0"), "B22 requires the accepted PostgreSQL18.0 profile")
         with socket.socket() as listener:
             listener.bind(("127.0.0.1", 0)); self.port = listener.getsockname()[1]
         self.data = self.output / "data"
@@ -242,45 +199,44 @@ class PostgresCluster:
         self.stop()
 
 
-def configuration(provider: str, database: str, output: Path, *, tls: tuple[Path, Path] | None = None):
-    token = secrets.token_urlsafe(32)
-    config = {"provider": provider, "database": database, "allowLocalDatabaseTlsDisable": True,
-        "blobDirectory": str(output / "blobs"), "consumerDatabase": str(output / "consumer.sqlite"),
-        "cursorKey": base64.b64encode(secrets.token_bytes(32)).decode(), "runWorkers": False,
-        "orphanGraceSeconds": 60, "requestTimeoutSeconds": 30,
-        "principals": [{"token": token, "tenant": "b22-tenant", "principal": "b22-actor", "canWrite": True}]}
-    if tls:
-        config.update(tlsCertificatePem=str(tls[0]), tlsPrivateKeyPem=str(tls[1]))
-    return config, token
+def configuration(provider: str, database: str, output: Path):
+    config = reference.configuration(provider, database, output)
+    config['orphanGraceSeconds'] = 60
+    return config
 
 
-def admin(command: list[str], config: dict, option: str, output: Path, timeout=90):
-    output.mkdir(parents=True, exist_ok=False)
-    private = output / "config.private.json"
-    write_json(private, config); private.chmod(0o600)
-    with (output / "process.log").open("wb") as log:
-        result = subprocess.run([*command, "--config", str(private), option], stdout=log, stderr=subprocess.STDOUT, timeout=timeout)
-    require(result.returncode == 0, "Administrative reference process failed: " + option)
-    return (output / "process.log").read_text()
+def admin(command, config, option, output, timeout=120):
+    return run_case(command, config, option, output, timeout=timeout)
 
 
 class OneShot:
-    """An externally controlled actual migration/outbox/maintenance process."""
-    def __init__(self, command: list[str], config: dict, option: str, output: Path, observed=False):
+    """One finite, externally controlled migration/business/maintenance process."""
+    def __init__(self, command, config, option, output):
+        self.output = output
         output.mkdir(parents=True, exist_ok=False)
-        private = output / "config.private.json"
+        private = output / 'config.private.json'
         write_json(private, config); private.chmod(0o600)
-        self.log = (output / "process.log").open("wb")
-        if observed: command = ["env", "NW_B22_OBSERVATIONS=" + str(output.resolve() / "observations.jsonl"), *command]
-        self.process = subprocess.Popen([*command, "--config", str(private), option],
+        self.log = (output / 'process.log').open('wb')
+        self.process = subprocess.Popen([*command, '--config', str(private), option],
             stdout=self.log, stderr=subprocess.STDOUT, start_new_session=True)
         self.crashed = False
 
     def crash(self):
-        require(self.process.poll() is None, "Fault requires a still-live administrative process")
+        require(self.process.poll() is None, 'Fault requires a live database fixture process')
         os.killpg(self.process.pid, signal.SIGKILL); self.process.wait(timeout=15)
-        require(self.process.returncode == -signal.SIGKILL, "Administrative process crash was not observed")
+        require(self.process.returncode == -signal.SIGKILL, 'Fixture process crash was not observed')
         self.crashed = True
+
+    def result(self, timeout=120):
+        self.process.wait(timeout=timeout); self.log.flush()
+        require(self.process.returncode == 0, 'Finite database fixture failed: ' + str(self.output / 'process.log'))
+        lines = [line[len('DATABASE_REFERENCE_RESULT '):] for line in (self.output / 'process.log').read_text().splitlines()
+            if line.startswith('DATABASE_REFERENCE_RESULT ')]
+        require(len(lines) == 1, 'Missing actual fixture completion receipt')
+        receipt = json.loads(lines[0])
+        require(receipt['databaseResourcesReleased'] and receipt['consumerResourcesReleased'], 'Database resources were not released')
+        write_json(self.output / 'receipt.json', receipt)
+        return receipt
 
     def close(self):
         if self.process.poll() is None:

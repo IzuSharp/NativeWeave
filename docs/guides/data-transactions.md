@@ -8,7 +8,7 @@ Design input is `c62cdb8aee833b6ab1a03e29a3f59f81a1b483f9`, C-TX-001 0.4.0.
 `src/Data.Transactions` is an unreleased build component. It adds no public
 constructor, source factory, physical pool or runtime. B04 composes the internal
 transport with the owning `DataSession` and Database facade. These files do not
-implement B04, add another NuGet package, or change current HelloWorld publication.
+replace Database Host, add another NuGet package, or publish a public package.
 Actual component tests instantiate this internal seam through a test ABI and the
 real native coordinator. Provider composition uses B02/B03; a controlled fixture
 is not evidence of a real database or assembled host.

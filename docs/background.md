@@ -1,38 +1,15 @@
-# Product background and bootstrap boundary
+# Current implementation boundary
 
-## Sources read for this bootstrap
+DB-Scope-01 narrows NativeWeave to one database product: strongly typed Fluent ORM in ordinary C# applications, with PostgreSQL, SQLite, Native AOT and Rust SeaQuery/SQLx execution.
 
-The user authorized initial implementation on 2026-11-14 after the research/design phase. All three local repositories were fast-forwarded before work:
+The database facade composes the existing native query compiler, provider pools, sessions, transactions, migrations, static model/DTO mapping, relation/CRUD and streaming implementations. Database Host owns database execution and remains essential. Core supplies the used ABI, lifetime, memory, error, callback, async and execution contracts.
 
-| Repository | Starting commit |
-| --- | --- |
-| NativeWeave | `658ed6a410783de356a7b9b2cd6601336fff5148` |
-| NativeWeave-Design | `c62cdb8aee833b6ab1a03e29a3f59f81a1b483f9` |
-| Plan | `050d54cc2433901cbe896f7490af0e94ba631415` |
+Application hosting is chosen by the caller. Standard ASP.NET Core HTTP and standard C# gRPC methods can invoke the same business query method. NativeWeave's own HTTP/gRPC server, routing and protocol products, MCP, independent compression/proof engines and HelloWorld demo are retired from current code, build, test and package graphs.
 
-Read scope includes Design/Plan README and collaboration rules; requirements charter; architecture boundaries; build/package/release specification; public API standard and index; NuGet consumption and documentation-system specifications; Plan A01/A13/A19/A21 and the existing phase boundaries. The repositories contain much broader research; this list does not claim every source or evidence file was re-reviewed.
+## Scope and history
 
-The existing design assigns domain work to the 34 Research / 32 Documentation / 48 Delivery graph. This bootstrap supplies only an initial integration and distribution path. It neither updates those acceptance records nor implements their full ABI, ownership/async system, loader, metadata generators, Database, ORM or Server contracts.
+The owner terminated Perf-01. This batch begins from fresh main commits, updates Plan before Design and implementation, and ends after pruning, actual regression/consumer execution, independent reviews, merges and merged-main CI checks. No performance work, new ORM feature or replacement host wrapper is included.
 
-## Reference conventions
+The historical Task-01 through Task-07 Plan evidence remains tied to its original source and artifact identities. Unchanged API signature checks read their original pinned Design snapshot. That history neither authorizes old products nor proves the new database candidate passed.
 
-References were inspected on 2026-11-14. These are format and workflow references, not imported business architecture or license policy:
-
-- [ArcForges/ArcForges](https://github.com/ArcForges/ArcForges/tree/10f692224f94916cfc93fbad971f80ec340c5edf): `NuGet.Config`, `.gitignore`, `.gitattributes`, `Directory.Build.props`, `SECURITY.md`.
-- [ArcForges/Contracts](https://github.com/ArcForges/Contracts/tree/de3dba76266e89654be9b4d29d097d525a281c6a): `.github/workflows/ci.yml`, `.github/workflows/security.yml`. Reuse the idea of a tested candidate and separate OIDC publishing; NativeWeave has no author-specific validation bypass.
-- [rust-lang/rust](https://github.com/rust-lang/rust/blob/5f4effd579500175af844241eb179e756190f1e7/.gitattributes): Rust text/diff and binary attributes.
-- [tokio-rs/tokio](https://github.com/tokio-rs/tokio/blob/f3e855fa55d6c1cc3e7a28e115a421b8ee5860bd/.gitignore): target-directory convention. NativeWeave intentionally commits Cargo.lock because it distributes reproducible native build inputs.
-
-Stable versions were checked against the installed SDK/compiler and official [.NET 11 release notes](https://github.com/dotnet/core/blob/main/release-notes/11.0/11.0.0/11.0.0.md) and [Rust 1.100 announcement](https://blog.rust-lang.org/2026/11/12/Rust-1.100.0/). No preview features are required.
-
-## Minimum closed loop
-
-`Rust source → cdylib → C# LibraryImport facade → NuGet runtime asset → isolated PackageReference consumer → dotnet run → Native AOT publish → actual executable`.
-
-A stateless greeting intentionally avoids introducing an artificial resource owner, async runtime or binding generator. It validates string encoding, bounded caller-owned buffers, C ABI status handling and package deployment. It does not prove deep engine integration, deterministic engine teardown, hot replacement or performance benefits. Those require the actual future engines and their accepted contracts.
-
-Repository documents retain the complete product goal in README.md. `NativeWeave.HelloWorld` is a disposable bootstrap package, not the naming or ABI decision for future Core/Engine packages. The pinned standard is adopted for this surface with compiled signature/nullability/default checks, required XML, generated reference, natural consumers and real AOT checks. Full DocFX site, released-package compatibility history, production asset manifests and independent API review remain future delivery obligations.
-
-## Web development handoff
-
-The repository carries its build instructions, exact versions, architecture boundaries, security/release guide and verification command. A web-hosted development environment should install the pinned SDK/Rust toolchain for maintainer work, use Python 3.9+, and run `python3 eng/build.py verify` on Linux x64 with `clang` and `zlib1g-dev`. Application consumers only require .NET and, for AOT publication, the C linker prerequisites. No machine-specific absolute path or credential belongs in the repository.
+See the [current Plan batch](https://github.com/IzuSharp/Plan/tree/main/ledger/evidence/batches/DB-Scope-01) and [current Design](https://github.com/IzuSharp/NativeWeave-Design/blob/main/docs/database/current-product.md).

@@ -101,11 +101,20 @@ def run_negatives(consumer, directory, published):
     closure = json.loads(closure_path.read_text())
     assets_path = directory / "obj/project.assets.json"
     task = directory / "cache/nativeweave.database" / c.items["NativeWeave.Database"]["version"].lower() / "tools/net11.0/NativeWeave.Packaging.Tasks.dll"
-    def msbuild(name, code=None, *, rid="linux-x64", omit=None, tamper=False):
+    def msbuild(name, code=None, *, changed=None, raw=None, changed_assets=None,
+                rid="linux-x64", mode="build", omit=None, duplicate=None,
+                destination=None, tamper=False):
         work = root / name
         work.mkdir()
         copied = work / "closure.json"
-        save(copied, closure)
+        if raw is None:
+            save(copied, closure if changed is None else changed)
+        else:
+            copied.write_text(raw)
+        resolved_assets = assets_path
+        if changed_assets is not None:
+            resolved_assets = work / "project.assets.json"
+            save(resolved_assets, changed_assets)
         project = ET.Element("Project")
         ET.SubElement(project, "UsingTask", TaskName="NativeWeave.Packaging.PackageClosure", AssemblyFile=str(task))
         items = ET.SubElement(project, "ItemGroup")
@@ -119,19 +128,64 @@ def run_negatives(consumer, directory, published):
                     altered.parent.mkdir(parents=True)
                     altered.write_bytes(selected.read_bytes() + b"domain-negative-hash")
                     selected = altered
-                element = ET.SubElement(items, "SelectedNative", Include=str(selected))
-                ET.SubElement(element, "NuGetPackageId").text = item["id"]
-                ET.SubElement(element, "PathInPackage").text = asset["sourcePath"]
-                ET.SubElement(element, "DestinationSubPath").text = Path(asset["sourcePath"]).name
+                for _ in range(2 if item["id"] == duplicate else 1):
+                    element = ET.SubElement(items, "SelectedNative", Include=str(selected))
+                    ET.SubElement(element, "NuGetPackageId").text = item["id"]
+                    ET.SubElement(element, "PathInPackage").text = asset["sourcePath"]
+                    ET.SubElement(element, "DestinationSubPath").text = destination or Path(asset["sourcePath"]).name
         target = ET.SubElement(project, "Target", Name="Check")
-        ET.SubElement(target, "PackageClosure", ClosureFiles=str(copied), AssetsFile=str(assets_path),
-                      RuntimeIdentifier=rid, Mode="build", OutputDirectory=str(work / "output"), ResolvedFiles="@(SelectedNative)")
+        ET.SubElement(target, "PackageClosure", ClosureFiles=str(copied), AssetsFile=str(resolved_assets),
+                      RuntimeIdentifier=rid, Mode=mode, OutputDirectory=str(work / "output"), ResolvedFiles="@(SelectedNative)")
         path = work / "Check.proj"
         ET.ElementTree(project).write(path, encoding="utf-8", xml_declaration=True)
         c.run("negative-task-" + name, ["dotnet", "msbuild", path, "-t:Check", "-nologo", "-nr:false", "-v:minimal"], env=env, reject=code)
         record(name, rejectionCode=code, actualShippedTaskSha256=sha(task), newDomainClosureSha256=sha(closure_path),
-               actualRestoredAssetsSha256=sha(assets_path))
+               actualRestoredAssetsSha256=sha(assets_path), inputClosureSha256=sha(copied),
+               inputAssetsSha256=sha(resolved_assets), mode=mode)
     msbuild("valid-domain-task-control")
     msbuild("missing-selected-domain-native", "NWPKG002", omit="NativeWeave.Database.Sqlite.Native")
     msbuild("unsupported-domain-rid", "NWPKG003", rid="linux-arm64")
-    msbuild("domain-native-hash-before-compile", "NWPKG004", tamper=True)
+    msbuild("domain-native-hash-before-compile", "NWPKG004", mode="validate", tamper=True)
+
+    # Preserve A16's unique parser/SDK-destination guards on the real database
+    # closure and shipped task; no conformance facade or native fixture remains.
+    msbuild("valid-domain-validation-control", mode="validate")
+    changed = copy.deepcopy(closure)
+    changed["schemaVersion"] = 2
+    msbuild("unknown-domain-schema", "NWPKG001", changed=changed)
+    changed = copy.deepcopy(closure)
+    changed["packages"].append(changed["packages"][0])
+    msbuild("duplicate-domain-package", "NWPKG001", changed=changed)
+    msbuild("duplicate-domain-json", "NWPKG002", raw=json.dumps(closure).replace(
+        '"schemaVersion": 1', '"schemaVersion": 1, "schemaVersion": 1', 1))
+    for name, field, value, code in (
+        ("unsupported-domain-cpu-baseline", "cpuBaseline", "x86-64-v4", "NWPKG003"),
+        ("malformed-domain-abi-integer", "abiMajor", -1, "NWPKG002"),
+        ("oversized-domain-engine-identity", "engineId", "a" * 129, "NWPKG002"),
+        ("domain-source-path-traversal", "sourcePath", "runtimes/linux-x64/native/../escape.so", "NWPKG002"),
+    ):
+        changed = copy.deepcopy(closure)
+        next(item for item in changed["packages"] if item.get("nativeAssets"))["nativeAssets"][0][field] = value
+        msbuild(name, code, changed=changed)
+    relaxed_assets = json.loads(assets_path.read_text())
+    identity = "NativeWeave.Database.Sqlite/" + c.items["NativeWeave.Database.Sqlite"]["version"]
+    altered_targets = 0
+    for target in relaxed_assets["targets"].values():
+        if identity in target:
+            target[identity]["dependencies"]["NativeWeave.Core"] = c.items["NativeWeave.Core"]["version"]
+            altered_targets += 1
+    if not altered_targets:
+        raise ValueError("The negative setup did not find the actual SQLite facade dependency")
+    msbuild("nonexact-domain-restored-edge", "NWPKG001", changed_assets=relaxed_assets)
+    msbuild("duplicate-selected-domain-native", "NWPKG002", duplicate="NativeWeave.Database.Sqlite.Native")
+    msbuild("domain-native-hash-during-build", "NWPKG004", tamper=True)
+    msbuild("domain-output-path-traversal", "NWPKG002", destination="../escape.so")
+    changed = copy.deepcopy(closure)
+    leaf = next(item for item in changed["packages"] if item.get("nativeAssets"))
+    other = copy.deepcopy(leaf["nativeAssets"][0])
+    other["engineId"] = "database.duplicate"
+    leaf["nativeAssets"].append(other)
+    msbuild("duplicate-domain-native-basename", "NWPKG002", changed=changed)
+
+    from registry_cases import restore_unlisted
+    restore_unlisted(c, root, record)

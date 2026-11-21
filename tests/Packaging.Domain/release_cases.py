@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Exercise B24's real local publication, destination consumers and rollback.
+"""Exercise real database publication, destination consumers and rollback locally.
 
-Run in the existing pristine SDK container. There is one candidate full consumer
+Run in the existing pristine SDK container, or select explicitly labeled local
+mechanism verification. There is one candidate full consumer
 and two previous-version smoke processes; no historical component matrix runs.
 Only evidence/ is suitable for CI upload. Other directories contain local feeds,
-consumer caches, databases and ephemeral test TLS keys.
+consumer caches and databases.
 """
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src/Packaging.Domain"))
-from model import json_bytes, load_manifest, module, relative_file, save, sha
+from model import TASK, json_bytes, load_manifest, module, relative_file, save, sha
 
 release = module("domain_release", "src/Packaging.Release/release.py")
 EXPECTED_CASES = frozenset((
@@ -31,6 +32,9 @@ EXPECTED_CASES = frozenset((
     "live-process-rollback-rejected",
     "partial-rollback-rejected",
     "wrong-source-rollback-rejected",
+    "wrong-rid-rollback-rejected",
+    "unknown-builder-rejected",
+    "wrong-provenance-subject-rejected",
     "same-native-version-conflict-rejected",
     "unsigned-domain-repository-signature-rejected",
     "signature-scope",
@@ -41,6 +45,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--consumer-environment", choices=("local", "pristine"), default="pristine")
     args = parser.parse_args()
     manifest_path, output = args.manifest.resolve(), args.output.resolve()
     manifest = load_manifest(manifest_path)
@@ -49,9 +54,11 @@ def main():
     evidence.mkdir()
     cases, commands, receipts = [], [], {}
     destination = output / "destination"
-    value = {"schemaVersion": 1, "passed": False, "status": "running",
+    value = {"schemaVersion": 1, "task": TASK, "passed": False, "status": "running",
              "sourceCommit": manifest["sourceCommit"], "manifestSha256": sha(manifest_path), "rid": "linux-x64",
              "publicDomainReleaseAccepted": False, "newDomainSignerAuthenticated": False,
+             "consumer_environment": args.consumer_environment,
+             "pristine_machine": args.consumer_environment == "pristine",
              "scope": "Local immutable destination and actual new-process consumption; no public registry write or native hot replacement.",
              "cases": cases}
 
@@ -80,7 +87,8 @@ def main():
     def actual_consume(name, closure, mode):
         result_dir = output / name
         arguments = [sys.executable, ROOT / "src/Packaging.Domain/consume.py", "--manifest", manifest_path,
-                     "--closure", closure, "--feed", destination, "--output", result_dir, "--mode", mode]
+                     "--closure", closure, "--feed", destination, "--output", result_dir, "--mode", mode,
+                     "--consumer-environment", args.consumer_environment]
         result = subprocess.run(list(map(str, arguments)), cwd=ROOT, capture_output=True, timeout=1800)
         command = {"label": name, "argv": list(map(str, arguments)), "exitCode": result.returncode, "processExited": True}
         for suffix, data in (("stdout", result.stdout), ("stderr", result.stderr)):
@@ -96,6 +104,9 @@ def main():
         receipt = json.loads(receipt_file.read_text())
         if receipt.get("passed") is not True:
             raise ValueError("Actual domain consumer did not pass")
+        if (receipt.get("consumer_environment") != args.consumer_environment
+                or receipt.get("pristine_machine") is not (args.consumer_environment == "pristine")):
+            raise ValueError("Actual consumer evidence names a different environment")
         save(evidence / (name + ".receipt.json"), receipt)
         # The consumer owns its safe evidence subset. Never recursively upload
         # its working directory, native packages, database or private test keys.
@@ -148,6 +159,19 @@ def main():
     wrong_receipt = copy.deepcopy(fresh)
     wrong_receipt["source_commit"] = "0" * 40
     reject("wrong-source-rollback-rejected", lambda: release.rollback(previous, previous_map, wrong_receipt, 0), "NWPKG001")
+    wrong_receipt = copy.deepcopy(fresh)
+    wrong_receipt["rid"] = "win-x64"
+    reject("wrong-rid-rollback-rejected", lambda: release.rollback(previous, previous_map, wrong_receipt, 0), "NWPKG001")
+    unknown = copy.deepcopy(previous)
+    unknown["builder_identity"] = "unknown-builder"
+    reject("unknown-builder-rejected", lambda: release.publish(unknown, feeds["previous"], output / "unknown-builder",
+        output / "unknown-builder-journal.json", output / "unknown-builder-catalog.json", release.verify_local, lambda *_: {}), "NWPKG015")
+    wrong_subject = copy.deepcopy(previous)
+    wrong_subject["packages"][0]["upload_archive_sha256"] = "0" * 64
+    reject("wrong-provenance-subject-rejected", lambda: release.publish(wrong_subject, feeds["previous"], output / "wrong-subject",
+        output / "wrong-subject-journal.json", output / "wrong-subject-catalog.json", release.verify_local, lambda *_: {}), "NWPKG004")
+    if any((output / name).exists() for name in ("unknown-builder-catalog.json", "wrong-subject-catalog.json")):
+        raise AssertionError("Rejected builder or provenance was advertised")
     selected = next(item for item in candidate["packages"] if item.get("native"))
     native_package = feeds["candidate"] / f"{selected['id']}.{selected['version']}.nupkg"
     conflicts = output / "conflicting-destination"
@@ -164,7 +188,7 @@ def main():
            positiveHistoricalMechanism="Retained A16/A22 evidence only; not a new domain signer or public release claim.")
     if (len(cases) != len(EXPECTED_CASES) or {item["name"] for item in cases} != EXPECTED_CASES
             or not all(item["passed"] is True for item in cases)):
-        raise AssertionError("The existing eleven domain release cases did not all complete")
+        raise AssertionError("The required database release cases did not all complete")
     for name in ("previous-journal.json", "previous-catalog.json", "existing-journal.json", "existing-catalog.json",
                  "candidate-journal.json", "candidate-catalog.json", "conflict-journal.json"):
         shutil.copyfile(output / name, evidence / name)
@@ -176,7 +200,7 @@ def main():
              if path.is_file() and path not in (evidence / "result.json", evidence / "evidence-index.json")}
     files["result.json"] = final_hash
     release.atomic_json(evidence / "evidence-index.json", {"schemaVersion": 1,
-        "scope": "Safe B24 JSON evidence subset; no private test keys, database files or package payloads.", "files": files})
+        "scope": "Safe database JSON evidence subset; no private test keys, database files or package payloads.", "files": files})
     release.atomic_json(evidence / "result.json", completed)
     # Keep the top-level result as the final orchestration commit marker.
     release.atomic_json(output / "result.json", completed)

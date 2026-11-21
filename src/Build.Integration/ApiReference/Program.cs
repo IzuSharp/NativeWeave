@@ -318,7 +318,13 @@ foreach (var entry in expected.OrderBy(e => e.Key, StringComparer.Ordinal))
     output.Append("## `").Append(entry.Key).Append("`\n\n```csharp\n").Append(Declaration(symbol)).Append("\n```\n\n");
     if (implicitMember) output.Append("Compiler-generated record/delegate member; inherits the documented type semantics.\n\n");
     else if (docs.TryGetValue(entry.Key, out var memberDoc))
-        foreach (var element in memberDoc.Elements()) output.Append("**").Append(element.Name.LocalName).Append(element.Attribute("name") is { } name ? " " + name.Value : "").Append(":** ").Append(string.Join(" ", element.Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))).Append("\n\n");
+        foreach (var element in memberDoc.Elements())
+        {
+            string content = string.Join(" ", element.Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
+            output.Append("**").Append(element.Name.LocalName).Append(element.Attribute("name") is { } name ? " " + name.Value : "").Append(":**");
+            if (content.Length != 0) output.Append(' ').Append(content);
+            output.Append("\n\n");
+        }
     if (symbol.ContainingType?.GetDocumentationCommentId() is { } typeId && docs.TryGetValue(typeId, out var typeDoc)
         && typeDoc.Element("remarks") is { } policy)
         output.Append("**Inherited type policy:** ").Append(string.Join(" ", policy.Value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))).Append("\n\n");

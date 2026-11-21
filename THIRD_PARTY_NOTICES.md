@@ -1,7 +1,9 @@
 # Third-party notices
 
-The NativeWeave source remains MIT licensed under the existing LICENSE. The initial Hello World native crate has no external Cargo dependencies and the managed facade has no third-party runtime PackageReference dependencies. Rust standard libraries and the .NET runtime/toolchain have their respective upstream licenses; Native AOT output may carry runtime components and SDK-produced notices.
+NativeWeave remains MIT licensed under LICENSE.
 
-Repository conventions were researched from ArcForges/ArcForges (NuGet sources, attributes, ignores and build hygiene), ArcForges/Contracts (separate candidate/verification/publication jobs and OIDC), rust-lang/rust (Rust text attributes), and tokio-rs/tokio (build-output ignore patterns). This is independently written scaffolding; no ArcForges application code, policy package or workflow implementation is incorporated. Exact reference identities and scope are recorded in docs/background.md.
+The retained database implementation uses Rust SeaQuery, SQLx, Tokio and their resolved dependencies. Each candidate native leaf carries the exact Cargo build closure, upstream license texts and notices, source identities and native SHA-256. The inventory is derived from actual Cargo compiler-artifact messages and locked metadata for that provider profile; unused workspace nodes are not reported as linked dependencies.
 
-Future engine packages must inventory their full Cargo/native dependency closure, preserve required license texts and NOTICE files, and document patches and source identities before distribution. This file is not a completed license inventory for future Database/ORM/Server engines.
+The packager also records the selected official Rust standard-library license material and native ELF dependencies. .NET/Native AOT runtime and toolchain components retain their upstream licensing and SDK-produced notices.
+
+See `src/Packaging.Domain/inventory.py` and the candidate `nativeweave/` manifests and NOTICE entries. This source-level note does not replace the generated per-artifact license inventory. A changed native dependency or patch requires a new reviewed inventory before distribution.

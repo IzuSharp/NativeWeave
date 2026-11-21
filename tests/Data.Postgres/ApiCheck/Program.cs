@@ -228,7 +228,7 @@ foreach (var key in expected.Keys.Intersect(actual.Keys))
 }
 var xml = XDocument.Load(Path.ChangeExtension(assemblyPath, ".xml"));
 var docs = xml.Descendants("member").ToDictionary(e => e.Attribute("name")!.Value, StringComparer.Ordinal);
-var output = new StringBuilder("# NativeWeave.Database.PostgreSql component API reference\n\nGenerated from the compiled product assembly and its XML comments by `tests/Data.Postgres/ApiCheck`. B01 data descriptors and transport only; database provider execution belongs to downstream tasks.\n\n");
+var output = new StringBuilder("# NativeWeave.Database.PostgreSql API reference\n\nGenerated from the compiled product assembly and its XML comments by `tests/Data.Postgres/ApiCheck`. Covers provider options, Engine preflight, and the integrated Create/UsePostgreSql data source factories. Exact declarations retain the pinned Design identity in `public-api.expected.json`; the historical B02/B04 ownership slice remains in `downstream-composition.json`.\n\n");
 foreach (var entry in expected.OrderBy(e => e.Key, StringComparer.Ordinal))
 {
     if (!actual.TryGetValue(entry.Key, out var symbol)) continue;

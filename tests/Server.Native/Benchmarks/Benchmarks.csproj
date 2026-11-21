@@ -1,4 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><OutputType>Exe</OutputType><AssemblyName>NativeWeave.Server.Native.Tests</AssemblyName></PropertyGroup>
-  <ItemGroup><FrameworkReference Include="Microsoft.AspNetCore.App" /><ProjectReference Include="../../../src/Server.Application/NativeWeave.Server.csproj" /></ItemGroup>
-</Project>
